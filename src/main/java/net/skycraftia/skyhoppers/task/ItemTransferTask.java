@@ -117,11 +117,12 @@ public class ItemTransferTask extends BukkitRunnable {
                 if (amount <= 0)
                     continue;
 
-                containerItem.setAmount(containerItem.getAmount() + amount);
                 if (itemAmount - amount <= 0)
                     toTransfer.setAmount(0);
                 else
                     toTransfer.setAmount(toTransfer.getAmount() - amount);
+
+                containerItem.setAmount(containerItem.getAmount() + amount);
                 return;
             }
 

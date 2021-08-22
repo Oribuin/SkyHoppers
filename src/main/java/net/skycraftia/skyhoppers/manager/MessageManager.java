@@ -137,6 +137,7 @@ public class MessageManager extends Manager {
         LINK_CONTAINER("Click on a container to link it to the hopper."),
         LINKED_CONTAINER("You have successfully #87E878linked &fa container!"),
         UNLINKED_CONTAINER("You have successfully #FF4F58unlinked &fa container!"),
+        CANT_CHAIN_HOPPERS("You cannot chain link a #99ff99Sky Hopper&f!"),
 
         RELOAD("You have reloaded SkyHoppers!"),
         DISABLED_WORLD("You cannot do this in this world."),

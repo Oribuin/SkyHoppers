@@ -35,7 +35,7 @@ public class BlockListeners implements Listener {
         this.hopperManager = plugin.getManager(HopperManager.class);
     }
 
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onHopperPlace(BlockPlaceEvent event) {
 
         if (!(event.getBlock().getState() instanceof Hopper hopper)) {
@@ -56,7 +56,7 @@ public class BlockListeners implements Listener {
         this.msg.send(event.getPlayer(), "placed-hopper");
     }
 
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onHopperBreak(BlockBreakEvent event) {
 
         if (!(event.getBlock().getState() instanceof Hopper hopper)) {
@@ -92,7 +92,7 @@ public class BlockListeners implements Listener {
         event.getPlayer().getInventory().addItem(item);
     }
 
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onLinkedBreak(BlockBreakEvent event) {
 
         if (!(event.getBlock().getState() instanceof Container container))

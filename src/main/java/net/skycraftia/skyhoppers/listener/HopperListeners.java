@@ -24,7 +24,7 @@ public class HopperListeners implements Listener {
         this.hopperManager = plugin.getManager(HopperManager.class);
     }
 
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onHopperPickup(InventoryPickupItemEvent event) {
 
         if (!(event.getInventory().getHolder() instanceof Hopper block))
@@ -45,7 +45,7 @@ public class HopperListeners implements Listener {
         }
     }
 
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onHopperMoveItem(InventoryMoveItemEvent event) {
         if (!(event.getDestination().getHolder() instanceof Hopper destination))
             return;

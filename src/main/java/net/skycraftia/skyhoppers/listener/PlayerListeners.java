@@ -29,7 +29,7 @@ public class PlayerListeners implements Listener {
         this.msg = this.plugin.getManager(MessageManager.class);
     }
 
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onHopperMenuOpen(PlayerInteractEvent event) {
 
         final Player player = event.getPlayer();
@@ -81,10 +81,17 @@ public class PlayerListeners implements Listener {
         if (!this.plugin.getLinkingPlayers().containsKey(player.getUniqueId()))
             return;
 
+        event.setCancelled(true);
+
+        if (this.hopperManager.getHopperFromLocation(block.getLocation()).isPresent()) {
+            this.msg.send(event.getPlayer(), "cant-chain-hoppers");
+            this.plugin.getLinkingPlayers().remove(player.getUniqueId());
+            return;
+        }
+
         final SkyHopper skyHopper = this.plugin.getLinkingPlayers().get(player.getUniqueId());
         assert skyHopper != null;
 
-        event.setCancelled(true);
         this.plugin.getLinkingPlayers().remove(player.getUniqueId());
 
         if (skyHopper.getLinked() != null && skyHopper.getLinked().getBlock().getLocation().equals(container.getBlock().getLocation())) {

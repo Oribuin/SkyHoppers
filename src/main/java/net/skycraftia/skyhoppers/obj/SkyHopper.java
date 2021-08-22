@@ -2,6 +2,7 @@ package net.skycraftia.skyhoppers.obj;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Tag;
 import org.bukkit.block.Container;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,18 +32,20 @@ public class SkyHopper {
     }
 
     public static List<Material> validContainers() {
-        return Arrays.asList(
+        List<Material> materials = new ArrayList<>(Arrays.asList(
                 Material.BARREL,
                 Material.BLAST_FURNACE,
-                Material.BREWING_STAND,
                 Material.CHEST,
+                Material.TRAPPED_CHEST,
                 Material.DISPENSER,
                 Material.DROPPER,
                 Material.FURNACE,
                 Material.HOPPER,
-                Material.SHULKER_BOX,
                 Material.SMOKER
-        );
+        ));
+
+        materials.addAll(Tag.SHULKER_BOXES.getValues());
+        return materials;
     }
 
     @Nullable

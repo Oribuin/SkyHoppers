@@ -6,7 +6,9 @@ import org.bukkit.command.CommandSender;
 import xyz.oribuin.orilibrary.command.Command;
 import xyz.oribuin.orilibrary.command.SubCommand;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Command.Info(
         name = "hoppers",
@@ -48,7 +50,22 @@ public class HopperCommand extends Command {
 
     @Override
     public List<String> completeString(CommandSender sender, String label, String[] args) {
-        return null;
+        final List<String> tabComplete = new ArrayList<>();
+
+        switch (args.length) {
+            case 0, 1 -> tabComplete.addAll(this.getSubCommands().stream().map(SubCommand::getInfo).map(info -> info.names()[0]).collect(Collectors.toList()));
+            case 2 -> {
+                if (args[0].equalsIgnoreCase("give"))
+                    return playerList(sender);
+            }
+            case 3 -> {
+                if (args[0].equalsIgnoreCase("give"))
+                    tabComplete.add("<amount>");
+
+            }
+        }
+
+        return tabComplete;
     }
 
 }

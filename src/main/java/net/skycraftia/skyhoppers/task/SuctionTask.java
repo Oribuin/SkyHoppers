@@ -2,8 +2,8 @@ package net.skycraftia.skyhoppers.task;
 
 import net.skycraftia.skyhoppers.SkyHoppersPlugin;
 import net.skycraftia.skyhoppers.manager.DataManager;
-import net.skycraftia.skyhoppers.obj.SkyHopper;
 import net.skycraftia.skyhoppers.obj.FilterType;
+import net.skycraftia.skyhoppers.obj.SkyHopper;
 import net.skycraftia.skyhoppers.util.PluginUtils;
 import org.bukkit.Chunk;
 import org.bukkit.Color;

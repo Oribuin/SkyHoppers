@@ -2,8 +2,8 @@ package net.skycraftia.skyhoppers.gui;
 
 import net.skycraftia.skyhoppers.SkyHoppersPlugin;
 import net.skycraftia.skyhoppers.manager.HopperManager;
-import net.skycraftia.skyhoppers.obj.SkyHopper;
 import net.skycraftia.skyhoppers.obj.FilterType;
+import net.skycraftia.skyhoppers.obj.SkyHopper;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;

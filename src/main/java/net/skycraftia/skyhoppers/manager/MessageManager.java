@@ -27,6 +27,13 @@ public class MessageManager extends Manager {
         super(plugin);
     }
 
+    public static String applyPapi(CommandSender sender, String text) {
+        if (!Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI"))
+            return text;
+
+        return PlaceholderAPI.setPlaceholders(sender instanceof Player ? (Player) sender : null, text);
+    }
+
     @Override
     public void enable() {
         final File file = FileUtils.createFile(this.plugin, "messages.yml");
@@ -114,13 +121,6 @@ public class MessageManager extends Manager {
 
     public String apply(CommandSender sender, String text) {
         return applyPapi(sender, text);
-    }
-
-    public static String applyPapi(CommandSender sender, String text) {
-        if (!Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI"))
-            return text;
-
-        return PlaceholderAPI.setPlaceholders(sender instanceof Player ? (Player) sender : null, text);
     }
 
     public enum Messages {

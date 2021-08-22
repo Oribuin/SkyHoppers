@@ -26,9 +26,8 @@ public class DataManager extends Manager {
 
     private final SkyHoppersPlugin plugin = (SkyHoppersPlugin) this.getPlugin();
     private final Map<Location, SkyHopper> cachedHoppers = new HashMap<>();
-    private DatabaseConnector connector = null;
-
     private final HopperManager hopperManager;
+    private DatabaseConnector connector = null;
 
     public DataManager(SkyHoppersPlugin plugin) {
         super(plugin);

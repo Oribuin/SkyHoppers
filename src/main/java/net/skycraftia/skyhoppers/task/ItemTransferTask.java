@@ -3,11 +3,8 @@ package net.skycraftia.skyhoppers.task;
 import net.skycraftia.skyhoppers.SkyHoppersPlugin;
 import net.skycraftia.skyhoppers.manager.DataManager;
 import net.skycraftia.skyhoppers.obj.SkyHopper;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.Hopper;
-import org.bukkit.event.inventory.InventoryMoveItemEvent;
-import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -44,10 +41,10 @@ public class ItemTransferTask extends BukkitRunnable {
                     .collect(Collectors.toList());
 
             // DO NOT DO THIS, THIS WILL COMPLETELY DESTROY A SERVER
-//            hopperItems.forEach(itemStack -> {
-//                final InventoryMoveItemEvent itemEvent = new InventoryMoveItemEvent(hopperInventory, itemStack, hopper.getLinked().getInventory(), true);
-//                Bukkit.getPluginManager().callEvent(itemEvent);
-//            });
+            //            hopperItems.forEach(itemStack -> {
+            //                final InventoryMoveItemEvent itemEvent = new InventoryMoveItemEvent(hopperInventory, itemStack, hopper.getLinked().getInventory(), true);
+            //                Bukkit.getPluginManager().callEvent(itemEvent);
+            //            });
         });
 
     }

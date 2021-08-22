@@ -67,11 +67,8 @@ public class HopperManager extends Manager {
         container.update();
         pdc.set(filterType, PersistentDataType.STRING, hopper.getFilterType().name());
         container.update();
-
-        if (hopper.getFilterItems().size() > 0) {
-            pdc.set(filterItems, PersistentDataType.STRING, serializeMaterials(hopper.getFilterItems()));
-            container.update();
-        }
+        pdc.set(filterItems, PersistentDataType.STRING, serializeMaterials(hopper.getFilterItems()));
+        container.update();
 
         if (hopper.getLinked() != null) {
             pdc.set(linked, PersistentDataType.STRING, serializeLocation(hopper.getLinked().getLocation()));

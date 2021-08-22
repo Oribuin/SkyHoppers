@@ -15,7 +15,7 @@ import java.util.Optional;
 
 @SubCommand.Info(
         names = {"manage"},
-        permission = "skyhoppers.manage",
+        permission = "skyhoppers.use",
         usage = "/hoppers manage"
 )
 public class SubManage extends SubCommand {

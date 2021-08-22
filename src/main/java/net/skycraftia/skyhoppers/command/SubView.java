@@ -17,7 +17,7 @@ import java.util.UUID;
 
 @SubCommand.Info(
         names = {"view"},
-        permission = "skyhoppers.view",
+        permission = "skyhoppers.use",
         usage = "/hoppers view"
 )
 public class SubView extends SubCommand {

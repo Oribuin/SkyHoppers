@@ -46,7 +46,7 @@ public class HopperGUI {
         gui.setItems(Arrays.asList(1, 2, 6, 7, 9, 17, 27, 35, 37, 38, 42, 43), Item.filler(Material.LIGHT_BLUE_STAINED_GLASS_PANE));
         gui.setItems(Arrays.asList(3, 4, 5, 18, 26, 39, 40, 41), Item.filler(Material.WHITE_STAINED_GLASS_PANE));
 
-        if (player.hasPermission("skyhoppers.view")) {
+        if (player.hasPermission("skyhoppers.use")) {
             gui.setItem(4, new Item.Builder(Material.SPYGLASS)
                     .setName(colorify("#99ff99&lVisualise Hopper"))
                     .setLore(colorify("&7Click to view this hopper,"), colorify("&7the hopper's current chunk and"), colorify("&7the linked chest in particle form!"))

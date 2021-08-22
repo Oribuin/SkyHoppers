@@ -110,12 +110,12 @@ public class FilterGUI {
 
         gui.setItem(38, new Item.Builder(Material.PAPER)
                 .setName(colorify("#FF4F58&lBack Page"))
-                .setLore(colorify("&7Click to go to"), colorify("the previous page!"))
+                .setLore(colorify("&7Click to go to"), colorify("&7the previous page!"))
                 .create(), event -> gui.previous(event.getWhoClicked()));
 
         gui.setItem(42, new Item.Builder(Material.PAPER)
                 .setName(colorify("#FF4F58&lNext Page"))
-                .setLore(colorify("&7Click to go to"), colorify("the next page!"))
+                .setLore(colorify("&7Click to go to"), colorify("&7the next page!"))
                 .create(), event -> gui.next(event.getWhoClicked()));
 
         this.addHopperItem(gui);

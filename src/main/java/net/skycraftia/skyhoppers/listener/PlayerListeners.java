@@ -2,6 +2,8 @@ package net.skycraftia.skyhoppers.listener;
 
 import net.skycraftia.skyhoppers.SkyHoppersPlugin;
 import net.skycraftia.skyhoppers.gui.HopperGUI;
+import net.skycraftia.skyhoppers.hook.BentoBoxHook;
+import net.skycraftia.skyhoppers.hook.WorldGuardHook;
 import net.skycraftia.skyhoppers.manager.HopperManager;
 import net.skycraftia.skyhoppers.manager.MessageManager;
 import net.skycraftia.skyhoppers.obj.SkyHopper;
@@ -53,6 +55,11 @@ public class PlayerListeners implements Listener {
 
         event.setCancelled(true);
 
+        if (!WorldGuardHook.buildAllowed(player, block.getLocation()) || !BentoBoxHook.containerAllowed(player, block.getLocation())) {
+            this.msg.send(player, "cannot-use");
+            return;
+        }
+
         if (this.plugin.getLinkingPlayers().containsKey(player.getUniqueId())) {
             return;
         }
@@ -61,7 +68,7 @@ public class PlayerListeners implements Listener {
 
     }
 
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onHopperLink(PlayerInteractEvent event) {
         final Player player = event.getPlayer();
 
@@ -75,14 +82,16 @@ public class PlayerListeners implements Listener {
         if (!(block.getState() instanceof Container container))
             return;
 
-        if (!SkyHopper.validContainers().contains(block.getType()))
-            return;
-
         if (!this.plugin.getLinkingPlayers().containsKey(player.getUniqueId()))
             return;
 
         event.setCancelled(true);
 
+        if (!WorldGuardHook.buildAllowed(player, block.getLocation()) || !BentoBoxHook.containerAllowed(player, block.getLocation())) {
+            this.msg.send(player, "cannot-use");
+            return;
+        }
+        
         if (this.hopperManager.getHopperFromLocation(block.getLocation()).isPresent()) {
             this.msg.send(event.getPlayer(), "cant-chain-hoppers");
             this.plugin.getLinkingPlayers().remove(player.getUniqueId());

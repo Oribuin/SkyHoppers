@@ -58,7 +58,8 @@ public class SubGive extends SubCommand {
             return;
         }
 
-        this.msg.send(sender, "given-hopper", StringPlaceholders.single("amount", amount));
+        this.msg.send(player, "given-hopper", StringPlaceholders.single("amount", amount));
+        this.msg.send(sender, "gave-hopper", StringPlaceholders.builder("amount", amount).addPlaceholder("player", player.getName()).build());
         final ItemStack item = this.hopperManager.getHopperAsItem(new SkyHopper(), amount);
         final Inventory inv = player.getInventory();
         if (inv.firstEmpty() == -1) {

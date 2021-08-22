@@ -1,6 +1,8 @@
 package net.skycraftia.skyhoppers.command;
 
 import net.skycraftia.skyhoppers.SkyHoppersPlugin;
+import net.skycraftia.skyhoppers.hook.BentoBoxHook;
+import net.skycraftia.skyhoppers.hook.WorldGuardHook;
 import net.skycraftia.skyhoppers.manager.HopperManager;
 import net.skycraftia.skyhoppers.manager.MessageManager;
 import net.skycraftia.skyhoppers.obj.SkyHopper;
@@ -40,6 +42,7 @@ public class SubView extends SubCommand {
 
         final Block targetBlock = player.getTargetBlockExact(5);
 
+
         final Map<UUID, SkyHopper> hopperMap = this.plugin.getHopperViewers();
 
         if (targetBlock == null || !(targetBlock.getState() instanceof Hopper hopperBlock) || targetBlock.getType() == Material.AIR) {
@@ -56,6 +59,11 @@ public class SubView extends SubCommand {
         final Optional<SkyHopper> customHopper = this.hopperManager.getHopperFromBlock(hopperBlock);
         if (customHopper.isEmpty()) {
             this.msg.send(sender, "not-a-hopper");
+            return;
+        }
+
+        if (!WorldGuardHook.buildAllowed(player, targetBlock.getLocation()) || !BentoBoxHook.containerAllowed(player, targetBlock.getLocation())) {
+            this.msg.send(player, "cannot-use");
             return;
         }
 

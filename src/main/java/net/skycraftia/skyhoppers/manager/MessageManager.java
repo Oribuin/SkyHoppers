@@ -126,6 +126,7 @@ public class MessageManager extends Manager {
     public enum Messages {
         PREFIX("#99ff99&lSkyHoppers &8| &f"),
         GIVEN_HOPPER("You have been given x%amount% #99ff99Sky Hopper&f!"),
+        GAVE_HOPPER("You have gave #99ff99%player% &fx#99ff99%amount% Sky Hopper"),
         PLACED_HOPPER("You have placed a #99ff99Sky Hopper&f!"),
         DESTROYED_HOPPER("You have destroyed a #99ff99Sky Hopper&f!"),
         NOT_A_HOPPER("This block is not a #99ff99Sky Hopper&f."),
@@ -138,6 +139,7 @@ public class MessageManager extends Manager {
         LINKED_CONTAINER("You have successfully #87E878linked &fa container!"),
         UNLINKED_CONTAINER("You have successfully #FF4F58unlinked &fa container!"),
         CANT_CHAIN_HOPPERS("You cannot chain link a #99ff99Sky Hopper&f!"),
+        CANNOT_USE("You cannot do this here!"),
 
         RELOAD("You have reloaded SkyHoppers!"),
         DISABLED_WORLD("You cannot do this in this world."),

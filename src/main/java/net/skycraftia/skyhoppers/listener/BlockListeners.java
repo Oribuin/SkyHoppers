@@ -1,12 +1,15 @@
 package net.skycraftia.skyhoppers.listener;
 
 import net.skycraftia.skyhoppers.SkyHoppersPlugin;
+import net.skycraftia.skyhoppers.hook.BentoBoxHook;
+import net.skycraftia.skyhoppers.hook.WorldGuardHook;
 import net.skycraftia.skyhoppers.manager.DataManager;
 import net.skycraftia.skyhoppers.manager.HopperManager;
 import net.skycraftia.skyhoppers.manager.MessageManager;
 import net.skycraftia.skyhoppers.obj.SkyHopper;
 import org.bukkit.block.Container;
 import org.bukkit.block.Hopper;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -38,6 +41,8 @@ public class BlockListeners implements Listener {
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onHopperPlace(BlockPlaceEvent event) {
 
+        final Player player = event.getPlayer();
+
         if (!(event.getBlock().getState() instanceof Hopper hopper)) {
             return;
         }
@@ -46,6 +51,12 @@ public class BlockListeners implements Listener {
         final Optional<SkyHopper> handHopper = this.hopperManager.getHopperFromItem(itemInHand);
         if (handHopper.isEmpty())
             return;
+
+        if (!WorldGuardHook.buildAllowed(player, hopper.getLocation()) || !BentoBoxHook.buildAllowed(player, hopper.getLocation())) {
+            this.msg.send(player, "cannot-use");
+            event.setCancelled(true);
+            return;
+        }
 
         if (this.hopperManager.getHopperFromBlock(hopper).isPresent())
             return;
@@ -59,6 +70,7 @@ public class BlockListeners implements Listener {
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onHopperBreak(BlockBreakEvent event) {
 
+        final Player player = event.getPlayer();
         if (!(event.getBlock().getState() instanceof Hopper hopper)) {
             return;
         }
@@ -66,6 +78,12 @@ public class BlockListeners implements Listener {
         final Optional<SkyHopper> customHopper = this.hopperManager.getHopperFromBlock(hopper);
         if (customHopper.isEmpty())
             return;
+
+        if (!WorldGuardHook.buildAllowed(player, hopper.getLocation()) || !BentoBoxHook.buildAllowed(player, hopper.getLocation())) {
+            this.msg.send(player, "cannot-use");
+            event.setCancelled(true);
+            return;
+        }
 
         // Remove the hopper from the visualizer.
         Map<UUID, SkyHopper> hopperViewers = this.plugin.getHopperViewers();
@@ -95,6 +113,7 @@ public class BlockListeners implements Listener {
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onLinkedBreak(BlockBreakEvent event) {
 
+        final Player player = event.getPlayer();
         if (!(event.getBlock().getState() instanceof Container container))
             return;
 
@@ -108,6 +127,12 @@ public class BlockListeners implements Listener {
 
         if (linkedHopper.isEmpty())
             return;
+
+        if (!WorldGuardHook.buildAllowed(player, container.getLocation()) || !BentoBoxHook.buildAllowed(player, container.getLocation())) {
+            this.msg.send(player, "cannot-use");
+            event.setCancelled(true);
+            return;
+        }
 
         this.msg.send(event.getPlayer(), "unlinked-container");
         linkedHopper.get().setLinked(null);

@@ -70,10 +70,12 @@ public class HopperManager extends Manager {
         pdc.set(filterItems, PersistentDataType.STRING, serializeMaterials(hopper.getFilterItems()));
         container.update();
 
-        if (hopper.getLinked() != null) {
+        if (hopper.getLinked() != null)
             pdc.set(linked, PersistentDataType.STRING, serializeLocation(hopper.getLinked().getLocation()));
-            container.update();
-        }
+        else
+            pdc.remove(linked);
+
+        container.update();
 
         final DataManager data = this.plugin.getManager(DataManager.class);
         data.getCachedHoppers().put(PluginUtils.getBlockLoc(hopper.getLocation()), hopper);

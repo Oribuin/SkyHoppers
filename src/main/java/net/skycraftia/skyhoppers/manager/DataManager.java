@@ -1,7 +1,7 @@
 package net.skycraftia.skyhoppers.manager;
 
-import net.skycraftia.skyhoppers.SkyHoppers;
-import net.skycraftia.skyhoppers.obj.CustomHopper;
+import net.skycraftia.skyhoppers.SkyHoppersPlugin;
+import net.skycraftia.skyhoppers.obj.SkyHopper;
 import net.skycraftia.skyhoppers.util.PluginUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -24,13 +24,13 @@ import java.util.function.Consumer;
 
 public class DataManager extends Manager {
 
-    private final SkyHoppers plugin = (SkyHoppers) this.getPlugin();
-    private final Map<Location, CustomHopper> cachedHoppers = new HashMap<>();
+    private final SkyHoppersPlugin plugin = (SkyHoppersPlugin) this.getPlugin();
+    private final Map<Location, SkyHopper> cachedHoppers = new HashMap<>();
     private DatabaseConnector connector = null;
 
     private final HopperManager hopperManager;
 
-    public DataManager(SkyHoppers plugin) {
+    public DataManager(SkyHoppersPlugin plugin) {
         super(plugin);
         this.hopperManager = this.plugin.getManager(HopperManager.class);
     }
@@ -70,7 +70,7 @@ public class DataManager extends Manager {
                     final Location loc = PluginUtils.getBlockLoc(new Location(world, x, y, z));
 
                     this.plugin.getServer().getScheduler().runTask(plugin, () -> {
-                        final Optional<CustomHopper> customHopper = this.hopperManager.getHopperFromLocation(loc);
+                        final Optional<SkyHopper> customHopper = this.hopperManager.getHopperFromLocation(loc);
                         if (customHopper.isEmpty())
                             return;
 
@@ -88,7 +88,7 @@ public class DataManager extends Manager {
      *
      * @param hopper The hopper that is being saved.
      */
-    public void saveHopper(CustomHopper hopper) {
+    public void saveHopper(SkyHopper hopper) {
 
         if (hopper.getLocation() == null)
             return;
@@ -114,7 +114,7 @@ public class DataManager extends Manager {
      *
      * @param hopper The hopper to be deleted.
      */
-    public void deleteHopper(CustomHopper hopper) {
+    public void deleteHopper(SkyHopper hopper) {
         if (hopper.getLocation() == null)
             return;
 
@@ -144,7 +144,7 @@ public class DataManager extends Manager {
         this.plugin.getServer().getScheduler().runTaskAsynchronously(plugin, callback);
     }
 
-    public Map<Location, CustomHopper> getCachedHoppers() {
+    public Map<Location, SkyHopper> getCachedHoppers() {
         return cachedHoppers;
     }
 

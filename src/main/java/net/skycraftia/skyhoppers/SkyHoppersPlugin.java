@@ -7,8 +7,9 @@ import net.skycraftia.skyhoppers.listener.PlayerListeners;
 import net.skycraftia.skyhoppers.manager.DataManager;
 import net.skycraftia.skyhoppers.manager.HopperManager;
 import net.skycraftia.skyhoppers.manager.MessageManager;
-import net.skycraftia.skyhoppers.obj.CustomHopper;
+import net.skycraftia.skyhoppers.obj.SkyHopper;
 import net.skycraftia.skyhoppers.task.HopperViewTask;
+import net.skycraftia.skyhoppers.task.ItemTransferTask;
 import net.skycraftia.skyhoppers.task.SuctionTask;
 import xyz.oribuin.orilibrary.OriPlugin;
 
@@ -16,9 +17,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public class SkyHoppers extends OriPlugin {
+public class SkyHoppersPlugin extends OriPlugin {
 
-    private final Map<UUID, CustomHopper> linkingPlayers = new HashMap<>();
+    private final Map<UUID, SkyHopper> linkingPlayers = new HashMap<>();
     private HopperViewTask hopperViewTask;
 
     @Override
@@ -43,6 +44,7 @@ public class SkyHoppers extends OriPlugin {
         new SuctionTask(this).runTaskTimer(this, 0L, 15L);
         this.hopperViewTask = new HopperViewTask();
         this.hopperViewTask.runTaskTimerAsynchronously(this, 0, 5L);
+//        new ItemTransferTask(this).runTaskTimerAsynchronously(this, 0L, 5);
 
 
     }
@@ -52,7 +54,7 @@ public class SkyHoppers extends OriPlugin {
 
     }
 
-    public Map<UUID, CustomHopper> getLinkingPlayers() {
+    public Map<UUID, SkyHopper> getLinkingPlayers() {
         return linkingPlayers;
     }
 

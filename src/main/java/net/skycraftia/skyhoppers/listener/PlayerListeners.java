@@ -1,11 +1,10 @@
 package net.skycraftia.skyhoppers.listener;
 
-import net.skycraftia.skyhoppers.SkyHoppers;
+import net.skycraftia.skyhoppers.SkyHoppersPlugin;
 import net.skycraftia.skyhoppers.gui.HopperGUI;
 import net.skycraftia.skyhoppers.manager.HopperManager;
-import net.skycraftia.skyhoppers.obj.CustomHopper;
-import org.bukkit.Bukkit;
-import org.bukkit.NamespacedKey;
+import net.skycraftia.skyhoppers.manager.MessageManager;
+import net.skycraftia.skyhoppers.obj.SkyHopper;
 import org.bukkit.block.Block;
 import org.bukkit.block.Container;
 import org.bukkit.block.Hopper;
@@ -14,26 +13,24 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
-import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.persistence.PersistentDataContainer;
 
 import java.util.Optional;
 
 public class PlayerListeners implements Listener {
 
-    private final SkyHoppers plugin;
+    private final SkyHoppersPlugin plugin;
     private final HopperManager hopperManager;
+    private final MessageManager msg;
 
-    public PlayerListeners(final SkyHoppers plugin) {
+    public PlayerListeners(final SkyHoppersPlugin plugin) {
         this.plugin = plugin;
         this.hopperManager = this.plugin.getManager(HopperManager.class);
+        this.msg = this.plugin.getManager(MessageManager.class);
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
-    public void onInteract(PlayerInteractEvent event) {
+    public void onHopperMenuOpen(PlayerInteractEvent event) {
 
         final Player player = event.getPlayer();
 
@@ -47,7 +44,7 @@ public class PlayerListeners implements Listener {
         if (!(block.getState() instanceof Hopper hopper))
             return;
 
-        final Optional<CustomHopper> customHopper = this.hopperManager.getHopperFromBlock(hopper);
+        final Optional<SkyHopper> customHopper = this.hopperManager.getHopperFromBlock(hopper);
         if (customHopper.isEmpty())
             return;
 
@@ -62,5 +59,43 @@ public class PlayerListeners implements Listener {
 
         new HopperGUI(plugin).create(customHopper.get(), player);
 
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
+    public void onHopperLink(PlayerInteractEvent event) {
+        final Player player = event.getPlayer();
+
+        if (!event.hasBlock() || event.getAction() != Action.LEFT_CLICK_BLOCK)
+            return;
+
+        final Block block = event.getClickedBlock();
+        if (block == null)
+            return;
+
+        if (!(block.getState() instanceof Container container))
+            return;
+
+        if (!SkyHopper.validContainers().contains(block.getType()))
+            return;
+
+        if (!this.plugin.getLinkingPlayers().containsKey(player.getUniqueId()))
+            return;
+
+        final SkyHopper skyHopper = this.plugin.getLinkingPlayers().get(player.getUniqueId());
+        assert skyHopper != null;
+
+        event.setCancelled(true);
+        this.plugin.getLinkingPlayers().remove(player.getUniqueId());
+
+        if (skyHopper.getLinked() != null && skyHopper.getLinked().getBlock().getLocation().equals(container.getBlock().getLocation())) {
+            skyHopper.setLinked(null);
+            this.hopperManager.saveHopper(skyHopper);
+            msg.send(player, "unlinked-container");
+            return;
+        }
+
+        skyHopper.setLinked(container);
+        this.hopperManager.saveHopper(skyHopper);
+        msg.send(player, "linked-container");
     }
 }

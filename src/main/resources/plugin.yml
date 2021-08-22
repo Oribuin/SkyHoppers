@@ -1,6 +1,6 @@
 name: SkyHoppers
-main: net.skycraftia.skyhoppers.SkyHoppers
+main: net.skycraftia.skyhoppers.SkyHoppersPlugin
 version: '1.0'
 api-version: '1.16'
 author: Oribuin
-description: Upgradeable Hoppers made for SkyCraftia.Net
+description: A chunk hopper plugin with wireless transfer, filters and suction made for skycraftia.net.

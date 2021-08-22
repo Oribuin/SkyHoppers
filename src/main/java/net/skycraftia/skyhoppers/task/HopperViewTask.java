@@ -1,6 +1,6 @@
 package net.skycraftia.skyhoppers.task;
 
-import net.skycraftia.skyhoppers.obj.CustomHopper;
+import net.skycraftia.skyhoppers.obj.SkyHopper;
 import net.skycraftia.skyhoppers.util.PluginUtils;
 import org.bukkit.*;
 import org.bukkit.entity.Player;
@@ -10,11 +10,10 @@ import java.util.*;
 
 public class HopperViewTask extends BukkitRunnable {
 
-    private final Map<UUID, CustomHopper> hopperViewers = new HashMap<>();
+    private final Map<UUID, SkyHopper> hopperViewers = new HashMap<>();
 
     @Override
     public void run() {
-        this.hopperViewers.keySet().removeIf(uuid -> Bukkit.getPlayer(uuid) == null);
         this.hopperViewers.forEach((uuid, hopper) -> {
             if (hopper.getLocation() == null)
                 return;
@@ -95,7 +94,7 @@ public class HopperViewTask extends BukkitRunnable {
         return result;
     }
 
-    public Map<UUID, CustomHopper> getHopperViewers() {
+    public Map<UUID, SkyHopper> getHopperViewers() {
         return hopperViewers;
     }
 

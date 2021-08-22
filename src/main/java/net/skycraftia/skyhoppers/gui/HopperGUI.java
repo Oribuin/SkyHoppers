@@ -1,8 +1,8 @@
 package net.skycraftia.skyhoppers.gui;
 
-import net.skycraftia.skyhoppers.SkyHoppers;
+import net.skycraftia.skyhoppers.SkyHoppersPlugin;
 import net.skycraftia.skyhoppers.manager.HopperManager;
-import net.skycraftia.skyhoppers.obj.CustomHopper;
+import net.skycraftia.skyhoppers.obj.SkyHopper;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -18,15 +18,15 @@ import static xyz.oribuin.orilibrary.util.HexUtils.colorify;
 
 public class HopperGUI {
 
-    private final SkyHoppers plugin;
+    private final SkyHoppersPlugin plugin;
     private final HopperManager hopperManager;
 
-    public HopperGUI(final SkyHoppers plugin) {
+    public HopperGUI(final SkyHoppersPlugin plugin) {
         this.plugin = plugin;
         this.hopperManager = this.plugin.getManager(HopperManager.class);
     }
 
-    public void create(CustomHopper hp, Player player) {
+    public void create(SkyHopper hp, Player player) {
         final Gui gui = new Gui(45, "Sky Hopper");
         gui.setDefaultClickFunction(event -> {
             event.setResult(Event.Result.DENY);
@@ -49,7 +49,7 @@ public class HopperGUI {
         gui.open(player);
     }
 
-    private void setItems(Gui gui, CustomHopper hp) {
+    private void setItems(Gui gui, SkyHopper hp) {
         gui.setItem(20, new Item.Builder(hp.isEnabled() ? Material.LIME_DYE : Material.RED_DYE)
                 .setName(colorify("#99ff99&lChunk Suction"))
                 .setLore(colorify("&7Click to toggle chunk suction."),

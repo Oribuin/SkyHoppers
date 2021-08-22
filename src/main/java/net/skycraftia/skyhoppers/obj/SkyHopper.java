@@ -10,7 +10,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class CustomHopper {
+public class SkyHopper {
 
     private boolean enabled;
     @Nullable
@@ -22,7 +22,7 @@ public class CustomHopper {
     @NotNull
     private List<Material> filterItems;
 
-    public CustomHopper() {
+    public SkyHopper() {
         this.location = null;
         this.enabled = true;
         this.linked = null;

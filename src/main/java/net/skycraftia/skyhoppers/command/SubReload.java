@@ -1,6 +1,6 @@
 package net.skycraftia.skyhoppers.command;
 
-import net.skycraftia.skyhoppers.SkyHoppers;
+import net.skycraftia.skyhoppers.SkyHoppersPlugin;
 import net.skycraftia.skyhoppers.manager.MessageManager;
 import org.bukkit.command.CommandSender;
 import xyz.oribuin.orilibrary.command.SubCommand;
@@ -12,10 +12,10 @@ import xyz.oribuin.orilibrary.command.SubCommand;
 )
 public class SubReload extends SubCommand {
 
-    private final SkyHoppers plugin = (SkyHoppers) this.getOriPlugin();
+    private final SkyHoppersPlugin plugin = (SkyHoppersPlugin) this.getOriPlugin();
     private final MessageManager msg = this.plugin.getManager(MessageManager.class);
 
-    public SubReload(SkyHoppers plugin, HopperCommand command) {
+    public SubReload(SkyHoppersPlugin plugin, HopperCommand command) {
         super(plugin, command);
     }
 

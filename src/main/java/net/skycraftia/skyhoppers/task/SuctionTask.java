@@ -1,8 +1,8 @@
 package net.skycraftia.skyhoppers.task;
 
-import net.skycraftia.skyhoppers.SkyHoppers;
+import net.skycraftia.skyhoppers.SkyHoppersPlugin;
 import net.skycraftia.skyhoppers.manager.DataManager;
-import net.skycraftia.skyhoppers.obj.CustomHopper;
+import net.skycraftia.skyhoppers.obj.SkyHopper;
 import net.skycraftia.skyhoppers.obj.FilterType;
 import net.skycraftia.skyhoppers.util.PluginUtils;
 import org.bukkit.Chunk;
@@ -24,7 +24,7 @@ public class SuctionTask extends BukkitRunnable {
     private final DataManager data;
     //    private final boolean roseStackerEnabled;
 
-    public SuctionTask(final SkyHoppers plugin) {
+    public SuctionTask(final SkyHoppersPlugin plugin) {
         this.data = plugin.getManager(DataManager.class);
         //        this.roseStackerEnabled = Bukkit.getPluginManager().isPluginEnabled("RoseStacker");
     }
@@ -32,7 +32,7 @@ public class SuctionTask extends BukkitRunnable {
     @Override
     public void run() {
         this.data.getCachedHoppers().values().stream()
-                .filter(CustomHopper::isEnabled)
+                .filter(SkyHopper::isEnabled)
                 .filter(hopper -> hopper.getLocation() != null)
                 .forEach(hopper -> {
                     final Block block = hopper.getLocation().getBlock();

@@ -1,8 +1,8 @@
 package net.skycraftia.skyhoppers.listener;
 
-import net.skycraftia.skyhoppers.SkyHoppers;
+import net.skycraftia.skyhoppers.SkyHoppersPlugin;
 import net.skycraftia.skyhoppers.manager.HopperManager;
-import net.skycraftia.skyhoppers.obj.CustomHopper;
+import net.skycraftia.skyhoppers.obj.SkyHopper;
 import net.skycraftia.skyhoppers.obj.FilterType;
 import net.skycraftia.skyhoppers.util.PluginUtils;
 import org.bukkit.block.Hopper;
@@ -20,7 +20,7 @@ public class HopperListeners implements Listener {
 
     private final HopperManager hopperManager;
 
-    public HopperListeners(final SkyHoppers plugin) {
+    public HopperListeners(final SkyHoppersPlugin plugin) {
         this.hopperManager = plugin.getManager(HopperManager.class);
     }
 
@@ -30,7 +30,7 @@ public class HopperListeners implements Listener {
         if (!(event.getInventory().getHolder() instanceof Hopper block))
             return;
 
-        final Optional<CustomHopper> customHopper = this.hopperManager.getHopperFromBlock(block);
+        final Optional<SkyHopper> customHopper = this.hopperManager.getHopperFromBlock(block);
         if (customHopper.isEmpty())
             return;
 
@@ -48,7 +48,7 @@ public class HopperListeners implements Listener {
         if (!(event.getDestination().getHolder() instanceof Hopper destination))
             return;
 
-        final Optional<CustomHopper> optional = this.hopperManager.getHopperFromBlock(destination);
+        final Optional<SkyHopper> optional = this.hopperManager.getHopperFromBlock(destination);
         if (optional.isEmpty())
             return;
 
@@ -63,7 +63,7 @@ public class HopperListeners implements Listener {
         if (!(event.getInventory().getHolder() instanceof Hopper block))
             return;
 
-        final Optional<CustomHopper> customHopper = this.hopperManager.getHopperFromBlock(block);
+        final Optional<SkyHopper> customHopper = this.hopperManager.getHopperFromBlock(block);
         if (customHopper.isEmpty())
             return;
 

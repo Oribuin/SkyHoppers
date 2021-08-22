@@ -1,6 +1,6 @@
 package net.skycraftia.skyhoppers.command;
 
-import net.skycraftia.skyhoppers.SkyHoppers;
+import net.skycraftia.skyhoppers.SkyHoppersPlugin;
 import net.skycraftia.skyhoppers.manager.MessageManager;
 import org.bukkit.command.CommandSender;
 import xyz.oribuin.orilibrary.command.Command;
@@ -20,10 +20,10 @@ import java.util.List;
 )
 public class HopperCommand extends Command {
 
-    private final SkyHoppers plugin = (SkyHoppers) this.getOriPlugin();
+    private final SkyHoppersPlugin plugin = (SkyHoppersPlugin) this.getOriPlugin();
     private final MessageManager msg = this.plugin.getManager(MessageManager.class);
 
-    public HopperCommand(SkyHoppers plugin) {
+    public HopperCommand(SkyHoppersPlugin plugin) {
         super(plugin);
 
         this.register(sender -> msg.send(sender, "player-only"), sender -> msg.send(sender, "invalid-permission"));

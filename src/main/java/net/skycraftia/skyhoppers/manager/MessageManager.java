@@ -1,7 +1,7 @@
 package net.skycraftia.skyhoppers.manager;
 
 import me.clip.placeholderapi.PlaceholderAPI;
-import net.skycraftia.skyhoppers.SkyHoppers;
+import net.skycraftia.skyhoppers.SkyHoppersPlugin;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -19,11 +19,11 @@ import static xyz.oribuin.orilibrary.util.HexUtils.colorify;
 
 public class MessageManager extends Manager {
 
-    private final SkyHoppers plugin = (SkyHoppers) this.getPlugin();
+    private final SkyHoppersPlugin plugin = (SkyHoppersPlugin) this.getPlugin();
 
     private FileConfiguration config;
 
-    public MessageManager(SkyHoppers plugin) {
+    public MessageManager(SkyHoppersPlugin plugin) {
         super(plugin);
     }
 
@@ -134,6 +134,8 @@ public class MessageManager extends Manager {
         TOGGLED_ON_VISUALISER("You have #87E878enabled &fthe hopper visualiser!"),
         CHANGED_VISUALISER("You changed the hopper visualiser!"),
         TOGGLED_OFF_VISUALISER("You have #FF4F58disabled &fthe hopper visualiser!"),
+        LINKED_CONTAINER("You have successfully #87E878linked &fa container!"),
+        UNLINKED_CONTAINER("You have successfully #FF4F58unlinked &fa container!"),
 
         RELOAD("You have reloaded SkyHoppers!"),
         DISABLED_WORLD("You cannot do this in this world."),

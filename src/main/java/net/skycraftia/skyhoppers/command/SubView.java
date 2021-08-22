@@ -1,10 +1,9 @@
 package net.skycraftia.skyhoppers.command;
 
-import net.skycraftia.skyhoppers.SkyHoppers;
+import net.skycraftia.skyhoppers.SkyHoppersPlugin;
 import net.skycraftia.skyhoppers.manager.HopperManager;
 import net.skycraftia.skyhoppers.manager.MessageManager;
-import net.skycraftia.skyhoppers.obj.CustomHopper;
-import net.skycraftia.skyhoppers.util.PluginUtils;
+import net.skycraftia.skyhoppers.obj.SkyHopper;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.Hopper;
@@ -23,11 +22,11 @@ import java.util.UUID;
 )
 public class SubView extends SubCommand {
 
-    private final SkyHoppers plugin = (SkyHoppers) this.getOriPlugin();
+    private final SkyHoppersPlugin plugin = (SkyHoppersPlugin) this.getOriPlugin();
     private final MessageManager msg = this.plugin.getManager(MessageManager.class);
     private final HopperManager hopperManager = this.plugin.getManager(HopperManager.class);
 
-    public SubView(SkyHoppers plugin, HopperCommand command) {
+    public SubView(SkyHoppersPlugin plugin, HopperCommand command) {
         super(plugin, command);
     }
 
@@ -41,7 +40,7 @@ public class SubView extends SubCommand {
 
         final Block targetBlock = player.getTargetBlockExact(5);
 
-        final Map<UUID, CustomHopper> hopperMap = this.plugin.getHopperViewTask().getHopperViewers();
+        final Map<UUID, SkyHopper> hopperMap = this.plugin.getHopperViewTask().getHopperViewers();
 
         if (targetBlock == null || !(targetBlock.getState() instanceof Hopper hopperBlock) || targetBlock.getType() == Material.AIR) {
             if (hopperMap.containsKey(player.getUniqueId())) {
@@ -54,7 +53,7 @@ public class SubView extends SubCommand {
             return;
         }
 
-        final Optional<CustomHopper> customHopper = this.hopperManager.getHopperFromBlock(hopperBlock);
+        final Optional<SkyHopper> customHopper = this.hopperManager.getHopperFromBlock(hopperBlock);
         if (customHopper.isEmpty()) {
             this.msg.send(sender, "not-a-hopper");
             return;

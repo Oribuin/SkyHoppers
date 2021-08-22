@@ -1,9 +1,9 @@
 package net.skycraftia.skyhoppers.command;
 
-import net.skycraftia.skyhoppers.SkyHoppers;
+import net.skycraftia.skyhoppers.SkyHoppersPlugin;
 import net.skycraftia.skyhoppers.manager.HopperManager;
 import net.skycraftia.skyhoppers.manager.MessageManager;
-import net.skycraftia.skyhoppers.obj.CustomHopper;
+import net.skycraftia.skyhoppers.obj.SkyHopper;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -19,11 +19,11 @@ import xyz.oribuin.orilibrary.util.StringPlaceholders;
 )
 public class SubGive extends SubCommand {
 
-    private final SkyHoppers plugin = (SkyHoppers) this.getOriPlugin();
+    private final SkyHoppersPlugin plugin = (SkyHoppersPlugin) this.getOriPlugin();
     private final MessageManager msg = this.plugin.getManager(MessageManager.class);
     private final HopperManager hopperManager = this.plugin.getManager(HopperManager.class);
 
-    public SubGive(SkyHoppers plugin, HopperCommand command) {
+    public SubGive(SkyHoppersPlugin plugin, HopperCommand command) {
         super(plugin, command);
     }
 
@@ -59,7 +59,7 @@ public class SubGive extends SubCommand {
         }
 
         this.msg.send(sender, "given-hopper", StringPlaceholders.single("amount", amount));
-        final ItemStack item = this.hopperManager.getHopperAsItem(new CustomHopper(), amount);
+        final ItemStack item = this.hopperManager.getHopperAsItem(new SkyHopper(), amount);
         final Inventory inv = player.getInventory();
         if (inv.firstEmpty() == -1) {
             player.getWorld().dropItem(player.getLocation(), item);

@@ -1,8 +1,8 @@
 package net.skycraftia.skyhoppers.gui;
 
-import net.skycraftia.skyhoppers.SkyHoppers;
+import net.skycraftia.skyhoppers.SkyHoppersPlugin;
 import net.skycraftia.skyhoppers.manager.HopperManager;
-import net.skycraftia.skyhoppers.obj.CustomHopper;
+import net.skycraftia.skyhoppers.obj.SkyHopper;
 import net.skycraftia.skyhoppers.obj.FilterType;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.Material;
@@ -21,15 +21,15 @@ import static xyz.oribuin.orilibrary.util.HexUtils.colorify;
 
 public class FilterGUI {
 
-    private final SkyHoppers plugin;
-    private final CustomHopper hopper;
+    private final SkyHoppersPlugin plugin;
+    private final SkyHopper hopper;
     private final HopperManager hopperManager;
 
     private final List<FilterType> filterTypes;
     private ListIterator<FilterType> iterator;
     private FilterType currentType;
 
-    public FilterGUI(final SkyHoppers plugin, CustomHopper hopper) {
+    public FilterGUI(final SkyHoppersPlugin plugin, SkyHopper hopper) {
         this.plugin = plugin;
         this.hopper = hopper;
         this.hopperManager = plugin.getManager(HopperManager.class);

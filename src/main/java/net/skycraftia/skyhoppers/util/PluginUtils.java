@@ -1,6 +1,6 @@
 package net.skycraftia.skyhoppers.util;
 
-import net.skycraftia.skyhoppers.obj.CustomHopper;
+import net.skycraftia.skyhoppers.obj.SkyHopper;
 import org.bukkit.Location;
 import org.bukkit.block.Container;
 import org.bukkit.inventory.ItemStack;
@@ -41,7 +41,7 @@ public final class PluginUtils {
      * @param hopper The custom hopper with the item filter
      * @return true if the item has been filtered.
      */
-    public static boolean itemFiltered(ItemStack item, CustomHopper hopper) {
+    public static boolean itemFiltered(ItemStack item, SkyHopper hopper) {
         switch (hopper.getFilterType()) {
             case WHITELIST -> {
                 return !hopper.getFilterItems().contains(item.getType());

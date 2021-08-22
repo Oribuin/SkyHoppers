@@ -1,10 +1,10 @@
 package net.skycraftia.skyhoppers.manager;
 
 import com.google.gson.Gson;
-import net.skycraftia.skyhoppers.SkyHoppers;
-import net.skycraftia.skyhoppers.obj.CustomHopper;
+import net.skycraftia.skyhoppers.SkyHoppersPlugin;
 import net.skycraftia.skyhoppers.obj.FilterItems;
 import net.skycraftia.skyhoppers.obj.FilterType;
+import net.skycraftia.skyhoppers.obj.SkyHopper;
 import net.skycraftia.skyhoppers.util.PluginUtils;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.Location;
@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 
 public class HopperManager extends Manager {
 
-    private final SkyHoppers plugin = (SkyHoppers) this.getPlugin();
+    private final SkyHoppersPlugin plugin = (SkyHoppersPlugin) this.getPlugin();
 
     // Define all the namespace keys.
     private final NamespacedKey enabled = new NamespacedKey(this.plugin, "enabled");
@@ -44,7 +44,7 @@ public class HopperManager extends Manager {
     private final Gson gson = new Gson();
 
 
-    public HopperManager(SkyHoppers plugin) {
+    public HopperManager(SkyHoppersPlugin plugin) {
         super(plugin);
     }
 
@@ -53,7 +53,7 @@ public class HopperManager extends Manager {
      *
      * @param hopper The hopper to be saved.
      */
-    public void saveHopper(CustomHopper hopper) {
+    public void saveHopper(SkyHopper hopper) {
 
         if (hopper.getLocation() == null)
             return;
@@ -81,8 +81,8 @@ public class HopperManager extends Manager {
             container.update();
         }
 
-        container.update();
-        this.plugin.getManager(DataManager.class).getCachedHoppers().put(PluginUtils.getBlockLoc(hopper.getLocation()), hopper);
+        final DataManager data = this.plugin.getManager(DataManager.class);
+        data.getCachedHoppers().put(PluginUtils.getBlockLoc(hopper.getLocation()), hopper);
     }
 
     /**
@@ -91,40 +91,39 @@ public class HopperManager extends Manager {
      * @param block The hopper tile entity
      * @return An optional custom hopper.
      */
-    public Optional<CustomHopper> getHopperFromBlock(Hopper block) {
+    public Optional<SkyHopper> getHopperFromBlock(Hopper block) {
 
         final PersistentDataContainer container = block.getPersistentDataContainer();
 
-        final DataManager data = this.plugin.getManager(DataManager.class);
 
         // Check if the tile entity is a custom hopper
         if (!container.has(enabled, PersistentDataType.STRING)) //  || !data.getCachedHoppers().containsKey(block.getLocation())
             return Optional.empty();
 
-        final CustomHopper customHopper = new CustomHopper();
-        customHopper.setLocation(block.getLocation());
-        customHopper.setEnabled(Boolean.parseBoolean(container.get(enabled, PersistentDataType.STRING)));
-        customHopper.setFilterType(FilterType.valueOf(container.getOrDefault(filterType, PersistentDataType.STRING, "WHITELIST")));
+        final SkyHopper skyHopper = new SkyHopper();
+        skyHopper.setLocation(block.getLocation());
+        skyHopper.setEnabled(Boolean.parseBoolean(container.get(enabled, PersistentDataType.STRING)));
+        skyHopper.setFilterType(FilterType.valueOf(container.getOrDefault(filterType, PersistentDataType.STRING, "WHITELIST")));
 
         if (container.get(filterItems, PersistentDataType.STRING) != null) {
-            customHopper.setFilterItems(this.deserializeMaterials(container.get(filterItems, PersistentDataType.STRING)));
+            skyHopper.setFilterItems(this.deserializeMaterials(container.get(filterItems, PersistentDataType.STRING)));
         }
 
         final String serializedLocation = container.get(linked, PersistentDataType.STRING);
         if (serializedLocation == null) {
-            customHopper.setLinked(null);
+            skyHopper.setLinked(null);
         } else {
 
             // No, I don't like this code either.
             Block linkedBlock = this.deserializeLocation(serializedLocation).getBlock();
             if (!(linkedBlock.getState() instanceof Container linkedContainer))
-                customHopper.setLinked(null);
+                skyHopper.setLinked(null);
             else
-                customHopper.setLinked(linkedContainer);
+                skyHopper.setLinked(linkedContainer);
 
         }
 
-        return Optional.of(customHopper);
+        return Optional.of(skyHopper);
     }
 
     /**
@@ -133,7 +132,7 @@ public class HopperManager extends Manager {
      * @param item The Hopper ItemStack
      * @return An optional custom hopper.
      */
-    public Optional<CustomHopper> getHopperFromItem(ItemStack item) {
+    public Optional<SkyHopper> getHopperFromItem(ItemStack item) {
         final ItemMeta meta = item.getItemMeta();
         if (meta == null)
             return Optional.empty();
@@ -142,7 +141,7 @@ public class HopperManager extends Manager {
         if (!container.has(enabled, PersistentDataType.STRING))
             return Optional.empty();
 
-        final CustomHopper hopper = new CustomHopper();
+        final SkyHopper hopper = new SkyHopper();
         hopper.setEnabled(Boolean.parseBoolean(container.get(enabled, PersistentDataType.STRING)));
         hopper.setFilterType(FilterType.valueOf(container.getOrDefault(filterType, PersistentDataType.STRING, "WHITELIST")));
 
@@ -173,7 +172,7 @@ public class HopperManager extends Manager {
      * @param location The location of the hopper
      * @return An optional custom hopper.
      */
-    public Optional<CustomHopper> getHopperFromLocation(Location location) {
+    public Optional<SkyHopper> getHopperFromLocation(Location location) {
         if (!(location.getBlock().getState() instanceof Hopper hopper))
             return Optional.empty();
 
@@ -186,7 +185,7 @@ public class HopperManager extends Manager {
      * @param hopper The Hopper
      * @return The Hopper as an ItemStack.
      */
-    public ItemStack getHopperAsItem(CustomHopper hopper, int amount) {
+    public ItemStack getHopperAsItem(SkyHopper hopper, int amount) {
 
         // Define the Item's Values
         final ItemStack item = new Item.Builder(Material.HOPPER)
@@ -221,37 +220,37 @@ public class HopperManager extends Manager {
     /**
      * Get the placeholders for the hopper itself,
      *
-     * @param customHopper The hopper
+     * @param skyHopper The hopper
      * @return The placeholders for the hopper.
      */
-    public StringPlaceholders getPlaceholders(CustomHopper customHopper) {
+    public StringPlaceholders getPlaceholders(SkyHopper skyHopper) {
         return StringPlaceholders.builder()
-                .addPlaceholder("enabled", customHopper.isEnabled() ? "Yes" : "No")
-                .addPlaceholder("linked", PluginUtils.formatContainerLoc(customHopper.getLinked()))
-                .addPlaceholder("filterType", WordUtils.capitalizeFully(customHopper.getFilterType().name().toLowerCase()))
+                .addPlaceholder("enabled", skyHopper.isEnabled() ? "Yes" : "No")
+                .addPlaceholder("linked", PluginUtils.formatContainerLoc(skyHopper.getLinked()))
+                .addPlaceholder("filterType", WordUtils.capitalizeFully(skyHopper.getFilterType().name().toLowerCase()))
                 .build();
     }
 
     /**
      * Format a message relating to hoppers with placeholders.
      *
-     * @param customHopper The hopper
-     * @param message      The message
+     * @param skyHopper The hopper
+     * @param message   The message
      * @return A colorified message with hopper placeholer support.
      */
-    private String format(CustomHopper customHopper, String message) {
-        return HexUtils.colorify(this.getPlaceholders(customHopper).apply(message));
+    private String format(SkyHopper skyHopper, String message) {
+        return HexUtils.colorify(this.getPlaceholders(skyHopper).apply(message));
     }
 
     /**
      * Format a message list relating to hoppers with placeholders.
      *
-     * @param customHopper The hopper
-     * @param message      The message list
+     * @param skyHopper The hopper
+     * @param message   The message list
      * @return A colorified message list with hopper placeholer support.
      */
-    private List<String> format(CustomHopper customHopper, List<String> message) {
-        return message.stream().map(s -> format(customHopper, s)).collect(Collectors.toList());
+    private List<String> format(SkyHopper skyHopper, List<String> message) {
+        return message.stream().map(s -> format(skyHopper, s)).collect(Collectors.toList());
     }
 
     /**

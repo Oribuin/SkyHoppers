@@ -34,11 +34,13 @@ public class HopperListeners implements Listener {
         if (customHopper.isEmpty())
             return;
 
+        if (!customHopper.get().isEnabled()) {
+            event.setCancelled(true);
+            return;
+        }
+
         final ItemStack item = event.getItem().getItemStack();
         if (PluginUtils.itemFiltered(item, customHopper.get())) {
-            if (customHopper.get().getFilterType() == FilterType.DESTROY)
-                event.getItem().remove();
-
             event.setCancelled(true);
         }
     }

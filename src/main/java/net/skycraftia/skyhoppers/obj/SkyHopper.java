@@ -6,8 +6,8 @@ import org.bukkit.block.Container;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 public class SkyHopper {
@@ -27,7 +27,7 @@ public class SkyHopper {
         this.enabled = true;
         this.linked = null;
         this.filterType = FilterType.BLACKLIST;
-        this.filterItems = Collections.singletonList(Material.GRASS_BLOCK);
+        this.filterItems = new ArrayList<>();
     }
 
     public static List<Material> validContainers() {

@@ -9,6 +9,7 @@ import net.skycraftia.skyhoppers.manager.HopperManager;
 import net.skycraftia.skyhoppers.manager.MessageManager;
 import net.skycraftia.skyhoppers.obj.SkyHopper;
 import net.skycraftia.skyhoppers.task.HopperViewTask;
+import net.skycraftia.skyhoppers.task.ItemTransferTask;
 import net.skycraftia.skyhoppers.task.SuctionTask;
 import xyz.oribuin.orilibrary.OriPlugin;
 
@@ -44,6 +45,8 @@ public class SkyHoppersPlugin extends OriPlugin {
         HopperViewTask hopperViewTask = new HopperViewTask();
         this.hopperViewers = hopperViewTask.getHopperViewers();
         hopperViewTask.runTaskTimerAsynchronously(this, 0, 5L);
+
+        new ItemTransferTask(this).runTaskTimer(this, 0, 35L);
 
     }
 

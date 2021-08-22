@@ -40,13 +40,63 @@ public class ItemTransferTask extends BukkitRunnable {
                     .filter(itemStack -> itemStack.getType() != Material.AIR)
                     .collect(Collectors.toList());
 
-            // DO NOT DO THIS, THIS WILL COMPLETELY DESTROY A SERVER
-            //            hopperItems.forEach(itemStack -> {
-            //                final InventoryMoveItemEvent itemEvent = new InventoryMoveItemEvent(hopperInventory, itemStack, hopper.getLinked().getInventory(), true);
-            //                Bukkit.getPluginManager().callEvent(itemEvent);
-            //            });
-        });
+            hopperItems.forEach(itemStack -> {
+                switch (hopper.getLinked().getType()) {
 
+                    // are we ready for
+                    case BLAST_FURNACE, SMOKER, FURNACE -> this.transferToFurnace(itemStack, hopper.getLinked().getInventory());
+
+                }
+
+
+            });
+        });
     }
 
+    /**
+     * Transfer an item from a sky hopper to a linked furnace
+     *
+     * @param toTransfer The item being transferred to the furnace
+     * @param furnaceInv The furnace inventory
+     */
+    private void transferToFurnace(ItemStack toTransfer, Inventory furnaceInv) {
+        for (int i = 0; i < 2; i++) {
+            int itemAmount = toTransfer.getAmount();
+            if (itemAmount <= 0)
+                return;
+
+            final ItemStack containerItem = furnaceInv.getItem(i);
+
+            if (toTransfer.getType().isFuel() && i == 0 || !toTransfer.getType().isFuel() && i == 1)
+                continue;
+
+            // slot is empty, fill it with the whole itemstack
+            if (containerItem == null || containerItem.getType() == Material.AIR) {
+                furnaceInv.setItem(i, toTransfer.clone());
+                toTransfer.setAmount(0);
+
+            } else if (toTransfer.isSimilar(containerItem)) {
+                int amount = Math.min(containerItem.getMaxStackSize() - containerItem.getAmount(), toTransfer.getAmount());
+                if (amount <= 0)
+                    continue;
+
+                containerItem.setAmount(containerItem.getAmount() + amount);
+                if (itemAmount - amount <= 0)
+                    toTransfer.setAmount(0);
+                else
+                    toTransfer.setAmount(toTransfer.getAmount() - amount);
+            }
+
+        }
+
+        // never uncomment this, It is such a bad idea
+        // It increases the server's overall cpu usage by 600% and increases ram usage just low enough to not crash
+        // your operating system.
+
+        // Yes I am keeping this in here.
+        //            hopperItems.forEach(itemStack -> {
+        //                final InventoryMoveItemEvent itemEvent = new InventoryMoveItemEvent(hopperInventory, itemStack, hopper.getLinked().getInventory(), true);
+        //                Bukkit.getPluginManager().callEvent(itemEvent);
+        //            });
+    }
 }

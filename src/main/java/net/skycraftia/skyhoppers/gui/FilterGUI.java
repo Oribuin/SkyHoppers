@@ -132,6 +132,7 @@ public class FilterGUI {
     private void addHopperItem(PaginatedGui gui) {
         gui.setItem(4, new Item.Builder(Material.HOPPER)
                 .setName(colorify("#99ff99&lSwitch Filter &7| &f" + StringUtils.capitalize(hopper.getFilterType().name().toLowerCase())))
+                .setLore(colorify("&7" + hopper.getFilterType().getDesc()))
                 .create(), event -> {
 
             if (!iterator.hasNext()) {

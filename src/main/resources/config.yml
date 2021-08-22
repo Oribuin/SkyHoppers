@@ -1,0 +1,29 @@
+# The configuration file for SkyHoppers.
+
+# Should Mined Hoppers instantly go into the player's inventory?
+insta-pickup: false
+
+# Design the Hopper Item
+hopper:
+  name: '#99ff99&lSky Hopper'
+  lore:
+    - '&7Wirelessly transfer any item from this'
+    - '&7hopper to any container & suction'
+    - '&7a full chunk of resources!'
+    - ' '
+    - ' &f&m-----------------'
+    - ' &f| #99ff99&lEnabled &7: &f%enabled%'
+    - ' &f| #99ff99&lContainer &7: &f%linked%'
+    - ' &f| #99ff99&lFilter &7: &f%filterType%'
+  glow: true
+
+# Configure SQL Saving, MySQL is absolutely not recommended if you're using this on multiple servers
+# but mysql does do data faster so up to you.
+mysql:
+  enabled: false
+  host: localhost
+  port: 3306
+  dbname: DBName
+  username: Username
+  password: Password
+  ssl: true

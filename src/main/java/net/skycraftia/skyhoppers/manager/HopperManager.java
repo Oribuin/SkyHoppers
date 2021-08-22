@@ -25,10 +25,7 @@ import xyz.oribuin.orilibrary.manager.Manager;
 import xyz.oribuin.orilibrary.util.HexUtils;
 import xyz.oribuin.orilibrary.util.StringPlaceholders;
 
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class HopperManager extends Manager {
@@ -83,6 +80,14 @@ public class HopperManager extends Manager {
 
         final DataManager data = this.plugin.getManager(DataManager.class);
         data.getCachedHoppers().put(PluginUtils.getBlockLoc(hopper.getLocation()), hopper);
+
+        final List<UUID> hopperViewers = this.plugin.getHopperViewers().entrySet().stream()
+                .filter(entry -> entry.getValue().getLocation() != null)
+                .filter(entry -> PluginUtils.getBlockLoc(entry.getValue().getLocation()).equals(PluginUtils.getBlockLoc(hopper.getLocation())))
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+
+        hopperViewers.forEach(uuid -> this.plugin.getHopperViewers().put(uuid, hopper));
     }
 
     /**

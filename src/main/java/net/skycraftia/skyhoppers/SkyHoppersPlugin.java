@@ -19,7 +19,7 @@ import java.util.UUID;
 public class SkyHoppersPlugin extends OriPlugin {
 
     private final Map<UUID, SkyHopper> linkingPlayers = new HashMap<>();
-    private HopperViewTask hopperViewTask;
+    private Map<UUID, SkyHopper> hopperViewers;
 
     @Override
     public void enablePlugin() {
@@ -41,10 +41,9 @@ public class SkyHoppersPlugin extends OriPlugin {
 
         // Register Plugin Scheduled Tasks
         new SuctionTask(this).runTaskTimer(this, 0L, 15L);
-        this.hopperViewTask = new HopperViewTask();
-        this.hopperViewTask.runTaskTimerAsynchronously(this, 0, 5L);
-        //        new ItemTransferTask(this).runTaskTimerAsynchronously(this, 0L, 5);
-
+        HopperViewTask hopperViewTask = new HopperViewTask();
+        this.hopperViewers = hopperViewTask.getHopperViewers();
+        hopperViewTask.runTaskTimerAsynchronously(this, 0, 5L);
 
     }
 
@@ -57,8 +56,8 @@ public class SkyHoppersPlugin extends OriPlugin {
         return linkingPlayers;
     }
 
-    public HopperViewTask getHopperViewTask() {
-        return hopperViewTask;
+    public Map<UUID, SkyHopper> getHopperViewers() {
+        return hopperViewers;
     }
 
 }

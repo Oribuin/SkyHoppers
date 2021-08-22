@@ -2,6 +2,7 @@ package net.skycraftia.skyhoppers.gui;
 
 import net.skycraftia.skyhoppers.SkyHoppersPlugin;
 import net.skycraftia.skyhoppers.manager.HopperManager;
+import net.skycraftia.skyhoppers.manager.MessageManager;
 import net.skycraftia.skyhoppers.obj.SkyHopper;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.Material;
@@ -71,7 +72,11 @@ public class HopperGUI {
                         colorify("#FF4F58Destroy &7your linked container"),
                         colorify("&7container to unlink it.")
                 )
-                .create(), event -> this.plugin.getLinkingPlayers().put(event.getWhoClicked().getUniqueId(), hp));
+                .create(), event -> {
+            event.getWhoClicked().closeInventory();
+            this.plugin.getManager(MessageManager.class).send(event.getWhoClicked(), "link-container");
+            this.plugin.getLinkingPlayers().put(event.getWhoClicked().getUniqueId(), hp);
+        });
 
         gui.setItem(24, new Item.Builder(Material.HOPPER)
                 .setName(colorify("#99ff99&lManage Filter"))

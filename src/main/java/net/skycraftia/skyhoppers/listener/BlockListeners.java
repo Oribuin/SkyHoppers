@@ -68,7 +68,7 @@ public class BlockListeners implements Listener {
             return;
 
         // Remove the hopper from the visualizer.
-        Map<UUID, SkyHopper> hopperViewers = this.plugin.getHopperViewTask().getHopperViewers();
+        Map<UUID, SkyHopper> hopperViewers = this.plugin.getHopperViewers();
         hopperViewers.entrySet().removeIf(entry -> entry.getValue().getLocation() != null
                 && getBlockLoc(entry.getValue().getLocation()).equals(getBlockLoc(hopper.getLocation())));
 
@@ -103,13 +103,13 @@ public class BlockListeners implements Listener {
 
         final Optional<SkyHopper> linkedHopper = this.data.getCachedHoppers().values().stream()
                 .filter(hopper -> hopper.getLinked() != null)
-                .filter(hopper -> hopper.getLinked() == container)
+                .filter(hopper -> getBlockLoc(container.getLocation()).equals(getBlockLoc(hopper.getLinked().getLocation())))
                 .findAny();
 
         if (linkedHopper.isEmpty())
             return;
 
-        System.out.println("Destroyed Linked Container.");
+        this.msg.send(event.getPlayer(), "unlinked-container");
         linkedHopper.get().setLinked(null);
         hopperManager.saveHopper(linkedHopper.get());
     }

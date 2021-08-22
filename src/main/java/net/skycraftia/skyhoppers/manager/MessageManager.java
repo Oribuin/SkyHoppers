@@ -134,6 +134,7 @@ public class MessageManager extends Manager {
         TOGGLED_ON_VISUALISER("You have #87E878enabled &fthe hopper visualiser!"),
         CHANGED_VISUALISER("You changed the hopper visualiser!"),
         TOGGLED_OFF_VISUALISER("You have #FF4F58disabled &fthe hopper visualiser!"),
+        LINK_CONTAINER("Click on a container to link it to the hopper."),
         LINKED_CONTAINER("You have successfully #87E878linked &fa container!"),
         UNLINKED_CONTAINER("You have successfully #FF4F58unlinked &fa container!"),
 

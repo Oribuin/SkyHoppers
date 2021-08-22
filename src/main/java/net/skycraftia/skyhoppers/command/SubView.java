@@ -40,7 +40,7 @@ public class SubView extends SubCommand {
 
         final Block targetBlock = player.getTargetBlockExact(5);
 
-        final Map<UUID, SkyHopper> hopperMap = this.plugin.getHopperViewTask().getHopperViewers();
+        final Map<UUID, SkyHopper> hopperMap = this.plugin.getHopperViewers();
 
         if (targetBlock == null || !(targetBlock.getState() instanceof Hopper hopperBlock) || targetBlock.getType() == Material.AIR) {
             if (hopperMap.containsKey(player.getUniqueId())) {

@@ -29,6 +29,14 @@ public class HopperViewTask extends BukkitRunnable {
                     .filter(loc -> loc.getWorld() != null)
                     .forEach(location -> player.spawnParticle(Particle.REDSTONE, location.clone(), 1, 0.0, 0.0, 0.0, new Particle.DustOptions(Color.LIME, 1)));
 
+            if (hopper.isEnabled()) {
+                final Location centerLocation = PluginUtils.centerLocation(hopper.getLocation()).clone();
+                centerLocation.subtract(0.0, 0.5, 0.0);
+
+                for (int i = 0; i < 5; i++)
+                    player.spawnParticle(Particle.REDSTONE, centerLocation, 2, 2, 0.0, 2, 0.0, new Particle.DustOptions(Color.PURPLE, 1));
+            }
+
             // Show Linked Container Outline
             if (hopper.getLinked() != null) {
                 final Location corner1 = PluginUtils.getBlockLoc(hopper.getLinked().getLocation());

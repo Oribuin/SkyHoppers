@@ -70,8 +70,10 @@ public class DataManager extends Manager {
 
                     this.plugin.getServer().getScheduler().runTask(plugin, () -> {
                         final Optional<SkyHopper> customHopper = this.hopperManager.getHopperFromLocation(loc);
-                        if (customHopper.isEmpty())
+                        if (customHopper.isEmpty()) {
+                            this.deleteHopper(loc);
                             return;
+                        }
 
                         this.cachedHoppers.put(loc, customHopper.get());
                     });
@@ -111,13 +113,13 @@ public class DataManager extends Manager {
     /**
      * Delete a hopper from the plugin database.
      *
-     * @param hopper The hopper to be deleted.
+     * @param location The location of the hopper.
      */
-    public void deleteHopper(SkyHopper hopper) {
-        if (hopper.getLocation() == null)
+    public void deleteHopper(Location location) {
+        if (location == null)
             return;
 
-        final Location loc = PluginUtils.getBlockLoc(hopper.getLocation());
+        final Location loc = PluginUtils.getBlockLoc(location);
         this.cachedHoppers.remove(loc);
 
         this.async(task -> this.connector.connect(connection -> {

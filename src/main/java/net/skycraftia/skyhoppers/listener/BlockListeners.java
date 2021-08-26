@@ -91,7 +91,7 @@ public class BlockListeners implements Listener {
                 && getBlockLoc(entry.getValue().getLocation()).equals(getBlockLoc(hopper.getLocation())));
 
         // Delete the hopper's data
-        this.data.deleteHopper(customHopper.get());
+        this.data.deleteHopper(customHopper.get().getLocation());
         this.msg.send(event.getPlayer(), "destroyed-hopper");
 
         // Drop the hopper as an item to save data in the item.

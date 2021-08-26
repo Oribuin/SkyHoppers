@@ -1,10 +1,13 @@
 package net.skycraftia.skyhoppers.task;
 
+import dev.rosewood.rosestacker.api.RoseStackerAPI;
+import dev.rosewood.rosestacker.stack.StackedItem;
 import net.skycraftia.skyhoppers.SkyHoppersPlugin;
 import net.skycraftia.skyhoppers.manager.DataManager;
 import net.skycraftia.skyhoppers.obj.FilterType;
 import net.skycraftia.skyhoppers.obj.SkyHopper;
 import net.skycraftia.skyhoppers.util.PluginUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Color;
 import org.bukkit.Material;
@@ -58,49 +61,78 @@ public class SuctionTask extends BukkitRunnable {
                         if (PluginUtils.itemFiltered(item.getItemStack(), hopper))
                             return;
 
-                        // TODO, Add RoseStacker Support.
-                        for (int i = 0; i < 5; i++) {
-                            int itemAmount = item.getItemStack().getAmount();
+                        int itemAmount = this.getItemAmount(item);
 
+                        for (int i = 0; i < 5; i++) {
                             if (itemAmount <= 0)
                                 return;
 
                             final ItemStack hopperItem = container.getInventory().getItem(i);
                             if (hopperItem == null || hopperItem.getType() == Material.AIR) {
-                                // slot is empty, fill it with the whole itemstack
+                                // slot is empty, fill it with as many items as we can
                                 for (int x = 0; x < 5; x++)
                                     block.getWorld().spawnParticle(Particle.REDSTONE, PluginUtils.centerLocation(block.getLocation()), 5, 0.3, 0.3, 0.3, 0.0, new Particle.DustOptions(Color.fromRGB(255, 192, 203), 1));
 
+                                // Create a copy of the item and set the amount to at most the max stack size of the material
+                                ItemStack copy = item.getItemStack().clone();
+                                copy.setAmount(Math.min(itemAmount, copy.getMaxStackSize()));
+                                itemAmount -= copy.getAmount();
+
                                 item.getWorld().spawnParticle(Particle.SPELL_WITCH, item.getLocation(), 3, 0.0, 0.0, 0.0, 0.0);
                                 container.getInventory().setItem(i, item.getItemStack());
-                                item.remove();
 
-                                return;
-                            } else if (item.getItemStack().isSimilar(hopperItem)) {
+                                if (itemAmount <= 0)
+                                    item.remove();
+
+                                continue;
+                            }
+
+                            if (item.getItemStack().isSimilar(hopperItem)) {
                                 // slot has the exact same itemstack in it, can we increase the stack size any more?
-                                int amount = Math.min(hopperItem.getMaxStackSize() - hopperItem.getAmount(), item.getItemStack().getAmount());
-
+                                int amount = Math.min(hopperItem.getMaxStackSize() - hopperItem.getAmount(), itemAmount);
                                 if (amount > 0) {
                                     // we sure can! add as much as we can from the chunk item to the existing hopper item
                                     hopperItem.setAmount(hopperItem.getAmount() + amount);
                                     if (itemAmount - amount <= 0) { // are we removing *all* the items?
                                         item.remove();
-                                    } else {
-                                        item.getItemStack().setAmount(item.getItemStack().getAmount() - amount);
                                     }
+
+                                    itemAmount -= amount;
 
                                     // ooo! pretty!
                                     item.getWorld().spawnParticle(Particle.SPELL_WITCH, item.getLocation(), 3, 0.0, 0.0, 0.0, 0.0);
 
                                     for (int x = 0; x < 5; x++)
                                         block.getWorld().spawnParticle(Particle.REDSTONE, PluginUtils.centerLocation(block.getLocation()), 5, 0.3, 0.3, 0.3, 0.0, new Particle.DustOptions(Color.fromRGB(255, 192, 203), 1));
-                                    return;
                                 }
                             }
                         }
+
+                        this.setItemAmount(item, itemAmount);
                     });
                 });
     }
 
+    public int getItemAmount(Item item) {
+        if (Bukkit.getPluginManager().isPluginEnabled("RoseStacker")) {
+            StackedItem stackedItem = RoseStackerAPI.getInstance().getStackedItem(item);
+            if (stackedItem != null)
+                return stackedItem.getStackSize();
+        }
+
+        return item.getItemStack().getAmount();
+    }
+
+    public void setItemAmount(Item item, int amount) {
+        if (Bukkit.getPluginManager().isPluginEnabled("RoseStacker")) {
+            StackedItem stackedItem = RoseStackerAPI.getInstance().getStackedItem(item);
+            if (stackedItem != null) {
+                stackedItem.setStackSize(amount);
+                return;
+            }
+        }
+
+        item.getItemStack().setAmount(amount);
+    }
 
 }

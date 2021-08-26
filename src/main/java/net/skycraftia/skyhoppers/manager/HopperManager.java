@@ -40,7 +40,6 @@ public class HopperManager extends Manager {
 
     private final Gson gson = new Gson();
 
-
     public HopperManager(SkyHoppersPlugin plugin) {
         super(plugin);
     }
@@ -297,7 +296,7 @@ public class HopperManager extends Manager {
     }
 
     /**
-     * Serialize a location into a base64 value.
+     * Convert a list of materials into a json array to store in a string.
      *
      * @param materials The location.
      * @return The serialized location.

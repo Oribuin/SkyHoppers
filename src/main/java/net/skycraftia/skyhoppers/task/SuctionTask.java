@@ -7,11 +7,7 @@ import net.skycraftia.skyhoppers.manager.DataManager;
 import net.skycraftia.skyhoppers.obj.FilterType;
 import net.skycraftia.skyhoppers.obj.SkyHopper;
 import net.skycraftia.skyhoppers.util.PluginUtils;
-import org.bukkit.Bukkit;
-import org.bukkit.Chunk;
-import org.bukkit.Color;
-import org.bukkit.Material;
-import org.bukkit.Particle;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.Hopper;
 import org.bukkit.entity.Item;
@@ -42,12 +38,15 @@ public class SuctionTask extends BukkitRunnable {
                     if (!(block.getState() instanceof Hopper container))
                         return;
 
+                    // Don't suction items if the container is locked.
+                    if (container.isLocked())
+                        return;
+
                     final Chunk chunk = hopper.getLocation().getChunk();
                     final List<Item> chunkItems = Arrays.stream(chunk.getEntities())
                             .filter(entity -> entity instanceof Item)
                             .map(entity -> (Item) entity)
                             .collect(Collectors.toList());
-
 
                     // @author Esophose
                     chunkItems.forEach(item -> {

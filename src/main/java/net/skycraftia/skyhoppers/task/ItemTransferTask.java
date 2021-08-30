@@ -36,6 +36,10 @@ public class ItemTransferTask extends BukkitRunnable {
             if (!(hopper.getLocation().getBlock().getState() instanceof Hopper block))
                 return;
 
+            // Don't transfer items if the container is locked.
+            if (block.isLocked())
+                return;
+
             if (!SkyHopper.validContainers().contains(hopper.getLinked().getType()))
                 return;
 

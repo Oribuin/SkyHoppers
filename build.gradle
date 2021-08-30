@@ -4,7 +4,7 @@ plugins {
 }
 
 group "net.skycraftia.skyhoppers"
-version "1.0-B3"
+version "1.0-B4"
 sourceCompatibility = JavaVersion.VERSION_16
 targetCompatibility = JavaVersion.VERSION_16
 

@@ -9,6 +9,7 @@ import org.bukkit.block.Hopper;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
+import xyz.oribuin.gui.Item;
 
 import java.util.Arrays;
 import java.util.List;
@@ -18,9 +19,12 @@ import java.util.stream.Collectors;
 public class ItemTransferTask extends BukkitRunnable {
 
     private final DataManager data;
+    private int itemsPerTransfer = 2;
 
     public ItemTransferTask(final SkyHoppersPlugin plugin) {
         this.data = plugin.getManager(DataManager.class);
+        if (plugin.getConfig().get("items-per-transfer") != null)
+            this.itemsPerTransfer = plugin.getConfig().getInt("items-per-transfer");
     }
 
     @Override
@@ -43,77 +47,46 @@ public class ItemTransferTask extends BukkitRunnable {
 
             final Inventory linkedInventory = hopper.getLinked().getInventory();
 
-            hopperItems.forEach(itemStack -> {
-
-                switch (hopper.getLinked().getInventory().getType()) {
-                    // are we ready for a mess? Sure we are.
-                    case BLAST_FURNACE, SMOKER, FURNACE -> this.transferToFurnace(itemStack, linkedInventory);
-                    default -> this.transferToNormalInv(itemStack, linkedInventory, linkedInventory.getSize());
-                }
-            });
-
+            hopperItems.stream().findFirst().ifPresent(itemStack -> this.transferToNormalInv(itemStack, linkedInventory));
+            //            hopperItems.forEach(itemStack -> this.transferToNormalInv(itemStack, linkedInventory));
+            //
+            //                switch (hopper.getLinked().getInventory().getType()) {
+            //                    // are we ready for a mess? Sure we are.
+            //                    case BLAST_FURNACE, SMOKER, FURNACE -> this.transferToFurnace(itemStack, linkedInventory);
+            //                    default -> this.transferToNormalInv(itemStack, linkedInventory, linkedInventory.getSize());
+            //                }
         });
-    }
-
-    /**
-     * Transfer an item from a sky hopper to a linked furnace
-     *
-     * @param toTransfer The item being transferred to the furnace
-     * @param furnaceInv The furnace inventory
-     */
-    private void transferToFurnace(ItemStack toTransfer, Inventory furnaceInv) {
-        for (int i = 0; i < 2; i++) {
-            int itemAmount = toTransfer.getAmount();
-            if (itemAmount <= 0)
-                return;
-
-            final ItemStack containerItem = furnaceInv.getItem(i);
-
-            if (toTransfer.getType().isFuel() && i == 0 || !toTransfer.getType().isFuel() && i == 1)
-                continue;
-
-            // slot is empty, fill it with the whole itemstack
-            if (containerItem == null || containerItem.getType() == Material.AIR) {
-                furnaceInv.setItem(i, toTransfer.clone());
-                toTransfer.setAmount(0);
-                return;
-            } else if (toTransfer.isSimilar(containerItem)) {
-                int amount = Math.min(containerItem.getMaxStackSize() - containerItem.getAmount(), toTransfer.getAmount());
-                if (amount <= 0)
-                    continue;
-
-                containerItem.setAmount(containerItem.getAmount() + amount);
-                if (itemAmount - amount <= 0)
-                    toTransfer.setAmount(0);
-                else
-                    toTransfer.setAmount(toTransfer.getAmount() - amount);
-                return;
-            }
-        }
     }
 
     /**
      * Transfer an item from a sky hopper to a linked dispenser or dropper
      *
-     * @param toTransfer   The item being transferred to the dispenser or dropper
-     * @param dispenserInv The dispenser or dropper inventory
+     * @param toTransfer The item being transferred to the dispenser or dropper
+     * @param inv        The inventory.
      */
-    private void transferToNormalInv(ItemStack toTransfer, Inventory dispenserInv, int slotCount) {
-        for (int i = 0; i < slotCount; i++) {
+    private void transferToNormalInv(ItemStack toTransfer, Inventory inv) {
+        for (int i = 0; i < inv.getSize(); i++) {
             int itemAmount = toTransfer.getAmount();
             if (itemAmount <= 0)
                 return;
 
-            final ItemStack containerItem = dispenserInv.getItem(i);
+            final ItemStack containerItem = inv.getItem(i);
+
+            if (inv.getHolder() instanceof Furnace) {
+                if (toTransfer.getType().isFuel() && i == 0 || !toTransfer.getType().isFuel() && i == 1)
+                    continue;
+            }
+
+            int transferAmount = Math.min(itemAmount, itemsPerTransfer);
 
             // slot is empty, fill it with the whole itemstack
             if (containerItem == null || containerItem.getType() == Material.AIR) {
-                dispenserInv.setItem(i, toTransfer.clone());
-                toTransfer.setAmount(0);
+                inv.setItem(i, new Item.Builder(toTransfer.clone()).setAmount(transferAmount).create());
+                toTransfer.setAmount(toTransfer.getAmount() - transferAmount);
 
                 return;
             } else if (toTransfer.isSimilar(containerItem)) {
-                int amount = Math.min(containerItem.getMaxStackSize() - containerItem.getAmount(), toTransfer.getAmount());
+                int amount = Math.min(containerItem.getMaxStackSize() - containerItem.getAmount(), transferAmount);
                 if (amount <= 0)
                     continue;
 

@@ -41,13 +41,16 @@ public class SkyHoppersPlugin extends OriPlugin {
         new HopperCommand(this);
 
         // Register Plugin Scheduled Tasks
+        this.registerTasks();
+    }
+
+    public void registerTasks() {
         new SuctionTask(this).runTaskTimer(this, 0L, 15L);
         HopperViewTask hopperViewTask = new HopperViewTask();
         this.hopperViewers = hopperViewTask.getHopperViewers();
         hopperViewTask.runTaskTimerAsynchronously(this, 0, 5L);
 
-        new ItemTransferTask(this).runTaskTimer(this, 0, 35L);
-
+        new ItemTransferTask(this).runTaskTimer(this, 0, this.getConfig().getLong("transfer-ticks"));
     }
 
     @Override

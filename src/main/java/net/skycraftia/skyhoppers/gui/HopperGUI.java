@@ -5,16 +5,13 @@ import net.skycraftia.skyhoppers.manager.HopperManager;
 import net.skycraftia.skyhoppers.manager.MessageManager;
 import net.skycraftia.skyhoppers.obj.SkyHopper;
 import org.apache.commons.lang.StringUtils;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import xyz.oribuin.gui.Gui;
 import xyz.oribuin.gui.Item;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import static xyz.oribuin.orilibrary.util.HexUtils.colorify;
 
@@ -52,7 +49,18 @@ public class HopperGUI {
                     .setLore(colorify("&7Click to view this hopper,"), colorify("&7the hopper's current chunk and"), colorify("&7the linked chest in particle form!"))
                     .create(), event -> {
                 event.getWhoClicked().closeInventory();
-                Bukkit.dispatchCommand(event.getWhoClicked(), "hoppers view");
+                final Map<UUID, SkyHopper> hopperMap = this.plugin.getHopperViewers();
+                final MessageManager msg = this.plugin.getManager(MessageManager.class);
+
+
+                if (hopperMap.get(event.getWhoClicked().getUniqueId()) == null) {
+                    msg.send(event.getWhoClicked(), "toggled-on-visualiser");
+                    hopperMap.put(event.getWhoClicked().getUniqueId(), hp);
+                    return;
+                }
+
+                hopperMap.remove(event.getWhoClicked().getUniqueId());
+                msg.send(event.getWhoClicked(), "toggled-off-visualiser");
             });
         }
 

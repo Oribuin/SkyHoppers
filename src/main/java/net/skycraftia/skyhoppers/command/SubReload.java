@@ -2,6 +2,7 @@ package net.skycraftia.skyhoppers.command;
 
 import net.skycraftia.skyhoppers.SkyHoppersPlugin;
 import net.skycraftia.skyhoppers.manager.MessageManager;
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import xyz.oribuin.orilibrary.command.SubCommand;
 
@@ -22,6 +23,9 @@ public class SubReload extends SubCommand {
     @Override
     public void executeArgument(CommandSender sender, String[] args) {
         this.msg.send(sender, "reload");
+
+        Bukkit.getScheduler().cancelTasks(this.plugin);
         this.plugin.reload();
+        this.plugin.registerTasks();
     }
 }

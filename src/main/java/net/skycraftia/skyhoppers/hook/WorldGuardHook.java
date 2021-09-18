@@ -27,9 +27,7 @@ public class WorldGuardHook {
 
         final WorldGuard worldGuard = WorldGuard.getInstance();
         final RegionQuery query = worldGuard.getPlatform().getRegionContainer().createQuery();
-        boolean state = query.testState(BukkitAdapter.adapt(loc), WorldGuardPlugin.inst().wrapPlayer(player), Flags.BUILD);
-        System.out.println("WG: " + state);
-        return state;
+        return query.testState(BukkitAdapter.adapt(loc), WorldGuardPlugin.inst().wrapPlayer(player), Flags.BUILD);
     }
 
 }

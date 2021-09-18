@@ -52,13 +52,6 @@ public class ItemTransferTask extends BukkitRunnable {
             final Inventory linkedInventory = hopper.getLinked().getInventory();
 
             hopperItems.stream().findFirst().ifPresent(itemStack -> this.transferToNormalInv(itemStack, linkedInventory));
-            //            hopperItems.forEach(itemStack -> this.transferToNormalInv(itemStack, linkedInventory));
-            //
-            //                switch (hopper.getLinked().getInventory().getType()) {
-            //                    // are we ready for a mess? Sure we are.
-            //                    case BLAST_FURNACE, SMOKER, FURNACE -> this.transferToFurnace(itemStack, linkedInventory);
-            //                    default -> this.transferToNormalInv(itemStack, linkedInventory, linkedInventory.getSize());
-            //                }
         });
     }
 

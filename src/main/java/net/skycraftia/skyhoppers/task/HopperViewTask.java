@@ -59,7 +59,7 @@ public class HopperViewTask extends BukkitRunnable {
 
 
     /**
-     * Get all the particle locations to spawn a hollow cube inbetween point A & Point B
+     * Get all the particle locations to spawn a hollow cube in between point A & Point B
      *
      * @param corner1          The first corner.
      * @param corner2          The second corner

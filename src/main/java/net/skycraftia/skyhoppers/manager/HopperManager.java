@@ -62,7 +62,7 @@ public class HopperManager extends Manager {
 
         // Why the hell spigot makes me have to update the container each change instead of doing it the way ItemMeta does it
         // I will never understand but I digress.
-        pdc.set(enabled, PersistentDataType.STRING, String.valueOf(hopper.isEnabled()));
+        pdc.set(enabled, PersistentDataType.INTEGER, booleanToInt(hopper.isEnabled()));
         container.update();
         pdc.set(filterType, PersistentDataType.STRING, hopper.getFilterType().name());
         container.update();
@@ -100,12 +100,12 @@ public class HopperManager extends Manager {
 
 
         // Check if the tile entity is a custom hopper
-        if (!container.has(enabled, PersistentDataType.STRING)) //  || !data.getCachedHoppers().containsKey(block.getLocation())
+        if (!container.has(enabled, PersistentDataType.INTEGER))
             return Optional.empty();
 
         final SkyHopper skyHopper = new SkyHopper();
         skyHopper.setLocation(block.getLocation());
-        skyHopper.setEnabled(Boolean.parseBoolean(container.get(enabled, PersistentDataType.STRING)));
+        skyHopper.setEnabled(intToBoolean(container.get(enabled, PersistentDataType.INTEGER)));
         skyHopper.setFilterType(FilterType.valueOf(container.getOrDefault(filterType, PersistentDataType.STRING, "WHITELIST")));
 
         if (container.get(filterItems, PersistentDataType.STRING) != null) {
@@ -141,11 +141,11 @@ public class HopperManager extends Manager {
             return Optional.empty();
 
         final PersistentDataContainer container = meta.getPersistentDataContainer();
-        if (!container.has(enabled, PersistentDataType.STRING))
+        if (!container.has(enabled, PersistentDataType.INTEGER))
             return Optional.empty();
 
         final SkyHopper hopper = new SkyHopper();
-        hopper.setEnabled(Boolean.parseBoolean(container.get(enabled, PersistentDataType.STRING)));
+        hopper.setEnabled(intToBoolean(container.get(enabled, PersistentDataType.INTEGER)));
         hopper.setFilterType(FilterType.valueOf(container.getOrDefault(filterType, PersistentDataType.STRING, "WHITELIST")));
 
         if (container.get(filterItems, PersistentDataType.STRING) != null) {
@@ -204,7 +204,7 @@ public class HopperManager extends Manager {
 
         // Set the Item's values.
         final PersistentDataContainer container = meta.getPersistentDataContainer();
-        container.set(enabled, PersistentDataType.STRING, String.valueOf(hopper.isEnabled()));
+        container.set(enabled, PersistentDataType.INTEGER, booleanToInt(hopper.isEnabled()));
         container.set(filterType, PersistentDataType.STRING, hopper.getFilterType().name());
 
         if (hopper.getFilterItems().size() > 0) {
@@ -319,6 +319,14 @@ public class HopperManager extends Manager {
                 .stream()
                 .map(Material::matchMaterial)
                 .collect(Collectors.toList());
+    }
+
+    public boolean intToBoolean(int num) {
+        return Math.min(num, 1) == 1;
+    }
+
+    public int booleanToInt(boolean b) {
+        return b ? 1 : 0;
     }
 
 }

@@ -21,11 +21,9 @@ import java.util.stream.Collectors;
 public class SuctionTask extends BukkitRunnable {
 
     private final DataManager data;
-    //    private final boolean roseStackerEnabled;
 
     public SuctionTask(final SkyHoppersPlugin plugin) {
         this.data = plugin.getManager(DataManager.class);
-        //        this.roseStackerEnabled = Bukkit.getPluginManager().isPluginEnabled("RoseStacker");
     }
 
     @Override

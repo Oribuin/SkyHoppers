@@ -3,7 +3,7 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '7.0.0'
 }
 
-group "net.skycraftia.skyhoppers"
+group "xyz.oribuin.skyhoppers"
 version "1.0.2"
 sourceCompatibility = JavaVersion.VERSION_16
 targetCompatibility = JavaVersion.VERSION_16

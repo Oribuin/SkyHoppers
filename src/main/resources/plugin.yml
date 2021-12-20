@@ -1,9 +1,9 @@
 name: SkyHoppers
-main: net.skycraftia.skyhoppers.SkyHoppersPlugin
+main: net.oribuin.skyhoppers.SkyHoppersPlugin
 version: '1.0.2'
 api-version: '1.16'
 author: Oribuin
-description: A chunk hopper plugin with wireless transfer, filters and suction made for skycraftia.net.
+description: A chunk hopper plugin with wireless transfer, item filters and chunk suction.
 softdepend:
   - PlaceholderAPI
   - WorldGuard

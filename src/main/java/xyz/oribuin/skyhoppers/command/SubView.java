@@ -1,8 +1,6 @@
 package xyz.oribuin.skyhoppers.command;
 
 import xyz.oribuin.skyhoppers.SkyHoppersPlugin;
-import xyz.oribuin.skyhoppers.hook.BentoBoxHook;
-import xyz.oribuin.skyhoppers.hook.WorldGuardHook;
 import xyz.oribuin.skyhoppers.manager.HopperManager;
 import xyz.oribuin.skyhoppers.manager.MessageManager;
 import xyz.oribuin.skyhoppers.obj.SkyHopper;
@@ -42,7 +40,6 @@ public class SubView extends SubCommand {
 
         final Block targetBlock = player.getTargetBlockExact(5);
 
-
         final Map<UUID, SkyHopper> hopperMap = this.plugin.getHopperViewers();
 
         if (targetBlock == null || !(targetBlock.getState() instanceof Hopper hopperBlock) || targetBlock.getType() == Material.AIR) {
@@ -62,7 +59,7 @@ public class SubView extends SubCommand {
             return;
         }
 
-        if (!WorldGuardHook.buildAllowed(player, targetBlock.getLocation()) || !BentoBoxHook.containerAllowed(player, targetBlock.getLocation())) {
+        if (!this.hopperManager.canOpen(player, targetBlock.getLocation())) {
             this.msg.send(player, "cannot-use");
             return;
         }

@@ -1,10 +1,10 @@
 package xyz.oribuin.skyhoppers.command;
 
-import xyz.oribuin.skyhoppers.SkyHoppersPlugin;
-import xyz.oribuin.skyhoppers.manager.MessageManager;
 import org.bukkit.command.CommandSender;
 import xyz.oribuin.orilibrary.command.Command;
 import xyz.oribuin.orilibrary.command.SubCommand;
+import xyz.oribuin.skyhoppers.SkyHoppersPlugin;
+import xyz.oribuin.skyhoppers.manager.MessageManager;
 
 import java.util.ArrayList;
 import java.util.List;

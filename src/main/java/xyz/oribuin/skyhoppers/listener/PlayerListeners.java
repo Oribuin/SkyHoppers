@@ -2,8 +2,6 @@ package xyz.oribuin.skyhoppers.listener;
 
 import xyz.oribuin.skyhoppers.SkyHoppersPlugin;
 import xyz.oribuin.skyhoppers.gui.HopperGUI;
-import xyz.oribuin.skyhoppers.hook.BentoBoxHook;
-import xyz.oribuin.skyhoppers.hook.WorldGuardHook;
 import xyz.oribuin.skyhoppers.manager.HopperManager;
 import xyz.oribuin.skyhoppers.manager.MessageManager;
 import xyz.oribuin.skyhoppers.obj.SkyHopper;
@@ -55,7 +53,7 @@ public class PlayerListeners implements Listener {
 
         event.setCancelled(true);
 
-        if (!WorldGuardHook.buildAllowed(player, block.getLocation()) || !BentoBoxHook.containerAllowed(player, block.getLocation())) {
+        if (!this.hopperManager.canOpen(player, block.getLocation())) {
             this.msg.send(player, "cannot-use");
             return;
         }
@@ -87,7 +85,7 @@ public class PlayerListeners implements Listener {
 
         event.setCancelled(true);
 
-        if (!WorldGuardHook.buildAllowed(player, block.getLocation()) || !BentoBoxHook.containerAllowed(player, block.getLocation())) {
+        if (!this.hopperManager.canOpen(player, block.getLocation())) {
             this.msg.send(player, "cannot-use");
             return;
         }

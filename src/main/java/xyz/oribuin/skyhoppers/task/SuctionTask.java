@@ -1,29 +1,41 @@
 package xyz.oribuin.skyhoppers.task;
 
-import dev.rosewood.rosestacker.api.RoseStackerAPI;
-import dev.rosewood.rosestacker.stack.StackedItem;
-import xyz.oribuin.skyhoppers.SkyHoppersPlugin;
-import xyz.oribuin.skyhoppers.manager.DataManager;
-import xyz.oribuin.skyhoppers.obj.FilterType;
-import xyz.oribuin.skyhoppers.obj.SkyHopper;
-import xyz.oribuin.skyhoppers.util.PluginUtils;
-import org.bukkit.*;
+import org.bukkit.Chunk;
+import org.bukkit.Color;
+import org.bukkit.Material;
+import org.bukkit.Particle;
 import org.bukkit.block.Block;
 import org.bukkit.block.Hopper;
 import org.bukkit.entity.Item;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
+import xyz.oribuin.skyhoppers.SkyHoppersPlugin;
+import xyz.oribuin.skyhoppers.hook.StackerHook;
+import xyz.oribuin.skyhoppers.hook.stacker.RoseStackerHook;
+import xyz.oribuin.skyhoppers.hook.stacker.WildStackerHook;
+import xyz.oribuin.skyhoppers.manager.DataManager;
+import xyz.oribuin.skyhoppers.obj.FilterType;
+import xyz.oribuin.skyhoppers.obj.SkyHopper;
+import xyz.oribuin.skyhoppers.util.PluginUtils;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class SuctionTask extends BukkitRunnable {
 
     private final DataManager data;
+    private StackerHook stackerHook;
 
     public SuctionTask(final SkyHoppersPlugin plugin) {
         this.data = plugin.getManager(DataManager.class);
+        stackerHook = Stream.of(new RoseStackerHook(), new WildStackerHook())
+                .filter(x -> plugin.getServer().getPluginManager().isPluginEnabled(x.pluginName()))
+                .findAny()
+                .orElse(null);
+
+
     }
 
     @Override
@@ -111,22 +123,16 @@ public class SuctionTask extends BukkitRunnable {
     }
 
     public int getItemAmount(Item item) {
-        if (Bukkit.getPluginManager().isPluginEnabled("RoseStacker")) {
-            StackedItem stackedItem = RoseStackerAPI.getInstance().getStackedItem(item);
-            if (stackedItem != null)
-                return stackedItem.getStackSize();
-        }
+        if (stackerHook != null)
+            return stackerHook.getItemAmount(item);
 
         return item.getItemStack().getAmount();
     }
 
     public void setItemAmount(Item item, int amount) {
-        if (Bukkit.getPluginManager().isPluginEnabled("RoseStacker")) {
-            StackedItem stackedItem = RoseStackerAPI.getInstance().getStackedItem(item);
-            if (stackedItem != null) {
-                stackedItem.setStackSize(amount);
-                return;
-            }
+        if (stackerHook != null) {
+            stackerHook.setItemAmount(item, amount);
+            return;
         }
 
         item.getItemStack().setAmount(amount);

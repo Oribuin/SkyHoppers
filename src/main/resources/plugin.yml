@@ -1,6 +1,6 @@
 name: SkyHoppers
 main: net.oribuin.skyhoppers.SkyHoppersPlugin
-version: '1.0.2'
+version: '1.0.3'
 api-version: '1.16'
 author: Oribuin
 description: A chunk hopper plugin with wireless transfer, item filters and chunk suction.

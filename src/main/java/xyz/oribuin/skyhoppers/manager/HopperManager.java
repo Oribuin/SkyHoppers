@@ -1,11 +1,6 @@
 package xyz.oribuin.skyhoppers.manager;
 
 import com.google.gson.Gson;
-import xyz.oribuin.skyhoppers.SkyHoppersPlugin;
-import xyz.oribuin.skyhoppers.obj.FilterItems;
-import xyz.oribuin.skyhoppers.obj.FilterType;
-import xyz.oribuin.skyhoppers.obj.SkyHopper;
-import xyz.oribuin.skyhoppers.util.PluginUtils;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -15,6 +10,7 @@ import org.bukkit.block.Container;
 import org.bukkit.block.Hopper;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -24,6 +20,15 @@ import xyz.oribuin.gui.Item;
 import xyz.oribuin.orilibrary.manager.Manager;
 import xyz.oribuin.orilibrary.util.HexUtils;
 import xyz.oribuin.orilibrary.util.StringPlaceholders;
+import xyz.oribuin.skyhoppers.SkyHoppersPlugin;
+import xyz.oribuin.skyhoppers.hook.ProtectionHook;
+import xyz.oribuin.skyhoppers.hook.protection.BentoBoxHook;
+import xyz.oribuin.skyhoppers.hook.protection.IridiumHook;
+import xyz.oribuin.skyhoppers.hook.protection.WorldGuardHook;
+import xyz.oribuin.skyhoppers.obj.FilterItems;
+import xyz.oribuin.skyhoppers.obj.FilterType;
+import xyz.oribuin.skyhoppers.obj.SkyHopper;
+import xyz.oribuin.skyhoppers.util.PluginUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -37,6 +42,9 @@ public class HopperManager extends Manager {
     private final NamespacedKey linked = new NamespacedKey(this.plugin, "linked");
     private final NamespacedKey filterType = new NamespacedKey(this.plugin, "filtertype");
     private final NamespacedKey filterItems = new NamespacedKey(this.plugin, "filteritems");
+
+    // Pre defining all the protection plugins
+    private final List<ProtectionHook> protectionHooks = Arrays.asList(new BentoBoxHook(), new IridiumHook(), new WorldGuardHook());
 
     private final Gson gson = new Gson();
 
@@ -218,6 +226,28 @@ public class HopperManager extends Manager {
         item.setItemMeta(meta);
 
         return item;
+    }
+
+    /**
+     * Check if a player can build at a specified location
+     *
+     * @param player   The player
+     * @param location The location where the building is taking palce
+     * @return True if teh player can build
+     */
+    public boolean canBuild(Player player, Location location) {
+        return this.protectionHooks.stream().allMatch(hook -> hook.canBuild(player, location));
+    }
+
+    /**
+     * Check if a player can open a specific container
+     *
+     * @param player   The player
+     * @param location The location of the container
+     * @return True if they can open it.
+     */
+    public boolean canOpen(Player player, Location location) {
+        return this.protectionHooks.stream().allMatch(hook -> hook.canOpen(player, location));
     }
 
     /**

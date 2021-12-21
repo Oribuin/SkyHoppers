@@ -1,8 +1,6 @@
 package xyz.oribuin.skyhoppers.listener;
 
 import xyz.oribuin.skyhoppers.SkyHoppersPlugin;
-import xyz.oribuin.skyhoppers.hook.BentoBoxHook;
-import xyz.oribuin.skyhoppers.hook.WorldGuardHook;
 import xyz.oribuin.skyhoppers.manager.DataManager;
 import xyz.oribuin.skyhoppers.manager.HopperManager;
 import xyz.oribuin.skyhoppers.manager.MessageManager;
@@ -52,7 +50,7 @@ public class BlockListeners implements Listener {
         if (handHopper.isEmpty())
             return;
 
-        if (!WorldGuardHook.buildAllowed(player, hopper.getLocation()) || !BentoBoxHook.buildAllowed(player, hopper.getLocation())) {
+        if (!this.hopperManager.canBuild(player, hopper.getLocation())) {
             this.msg.send(player, "cannot-use");
             event.setCancelled(true);
             return;
@@ -79,7 +77,7 @@ public class BlockListeners implements Listener {
         if (customHopper.isEmpty())
             return;
 
-        if (!WorldGuardHook.buildAllowed(player, hopper.getLocation()) || !BentoBoxHook.buildAllowed(player, hopper.getLocation())) {
+        if (!this.hopperManager.canBuild(player, hopper.getLocation())) {
             this.msg.send(player, "cannot-use");
             event.setCancelled(true);
             return;
@@ -128,7 +126,7 @@ public class BlockListeners implements Listener {
         if (linkedHopper.isEmpty())
             return;
 
-        if (!WorldGuardHook.buildAllowed(player, container.getLocation()) || !BentoBoxHook.buildAllowed(player, container.getLocation())) {
+        if (!this.hopperManager.canBuild(player, event.getBlock().getLocation())) {
             this.msg.send(player, "cannot-use");
             event.setCancelled(true);
             return;

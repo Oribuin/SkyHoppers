@@ -2,8 +2,6 @@ package xyz.oribuin.skyhoppers.command;
 
 import xyz.oribuin.skyhoppers.SkyHoppersPlugin;
 import xyz.oribuin.skyhoppers.gui.HopperGUI;
-import xyz.oribuin.skyhoppers.hook.BentoBoxHook;
-import xyz.oribuin.skyhoppers.hook.WorldGuardHook;
 import xyz.oribuin.skyhoppers.manager.HopperManager;
 import xyz.oribuin.skyhoppers.manager.MessageManager;
 import xyz.oribuin.skyhoppers.obj.SkyHopper;
@@ -51,12 +49,11 @@ public class SubManage extends SubCommand {
             return;
         }
 
-        if (!WorldGuardHook.buildAllowed(player, targetBlock.getLocation()) || !BentoBoxHook.containerAllowed(player, targetBlock.getLocation())) {
+        if (!this.hopperManager.canOpen(player, targetBlock.getLocation())) {
             this.msg.send(player, "cannot-use");
             return;
         }
 
-        // TODO, Protection Hooks such as BSkyblock, WorldGuard, ECT.
         new HopperGUI(plugin).create(customHopper.get(), player);
 
     }

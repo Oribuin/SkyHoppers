@@ -9,6 +9,9 @@ transfer-ticks: 10
 # How many items per 'transfer-ticks' should be transferred wirelessly?
 items-per-transfer: 2
 
+# The range (In blocks) that a hopper can pick up items.
+suction-range: 5.0
+
 # Design the Hopper Item
 hopper:
   name: '#99ff99&lSky Hopper'

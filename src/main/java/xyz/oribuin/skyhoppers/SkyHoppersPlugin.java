@@ -1,5 +1,6 @@
 package xyz.oribuin.skyhoppers;
 
+import xyz.oribuin.orilibrary.OriPlugin;
 import xyz.oribuin.skyhoppers.command.HopperCommand;
 import xyz.oribuin.skyhoppers.listener.BlockListeners;
 import xyz.oribuin.skyhoppers.listener.HopperListeners;
@@ -11,7 +12,6 @@ import xyz.oribuin.skyhoppers.obj.SkyHopper;
 import xyz.oribuin.skyhoppers.task.HopperViewTask;
 import xyz.oribuin.skyhoppers.task.ItemTransferTask;
 import xyz.oribuin.skyhoppers.task.SuctionTask;
-import xyz.oribuin.orilibrary.OriPlugin;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -26,11 +26,9 @@ public class SkyHoppersPlugin extends OriPlugin {
     public void enablePlugin() {
 
         // Load Plugin Managers Asynchronously
-        this.getServer().getScheduler().runTaskAsynchronously(this, () -> {
-            this.getManager(DataManager.class);
-            this.getManager(HopperManager.class);
-            this.getManager(MessageManager.class);
-        });
+        this.getManager(DataManager.class);
+        this.getManager(HopperManager.class);
+        this.getManager(MessageManager.class);
 
         // Register Plugin Listeners
         this.getServer().getPluginManager().registerEvents(new BlockListeners(this), this);
@@ -45,8 +43,8 @@ public class SkyHoppersPlugin extends OriPlugin {
     }
 
     public void registerTasks() {
-        new SuctionTask(this).runTaskTimer(this, 0L, 15L);
-        HopperViewTask hopperViewTask = new HopperViewTask();
+        new SuctionTask(this).runTaskTimer(this, 0L, 10L);
+        HopperViewTask hopperViewTask = new HopperViewTask(this);
         this.hopperViewers = hopperViewTask.getHopperViewers();
         hopperViewTask.runTaskTimerAsynchronously(this, 0, 5L);
 

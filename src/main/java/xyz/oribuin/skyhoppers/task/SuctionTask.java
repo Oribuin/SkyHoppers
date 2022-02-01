@@ -1,11 +1,12 @@
 package xyz.oribuin.skyhoppers.task;
 
-import org.bukkit.Chunk;
 import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.Particle;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.Hopper;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -18,24 +19,25 @@ import xyz.oribuin.skyhoppers.obj.FilterType;
 import xyz.oribuin.skyhoppers.obj.SkyHopper;
 import xyz.oribuin.skyhoppers.util.PluginUtils;
 
-import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class SuctionTask extends BukkitRunnable {
 
     private final DataManager data;
-    private StackerHook stackerHook;
+    private final StackerHook stackerHook;
+    private final double suctionRange;
 
     public SuctionTask(final SkyHoppersPlugin plugin) {
         this.data = plugin.getManager(DataManager.class);
+        this.suctionRange = plugin.getConfig().getDouble("suction-range");
+
         stackerHook = Stream.of(new RoseStackerHook(), new WildStackerHook())
                 .filter(x -> plugin.getServer().getPluginManager().isPluginEnabled(x.pluginName()))
                 .findAny()
                 .orElse(null);
-
-
     }
 
     @Override
@@ -52,14 +54,15 @@ public class SuctionTask extends BukkitRunnable {
                     if (container.isLocked())
                         return;
 
-                    final Chunk chunk = hopper.getLocation().getChunk();
-                    final List<Item> chunkItems = Arrays.stream(chunk.getEntities())
-                            .filter(entity -> entity instanceof Item)
-                            .map(entity -> (Item) entity)
-                            .collect(Collectors.toList());
+                    World world = hopper.getLocation().getWorld();
+                    if (world == null)
+                        return;
+
+                    Collection<Entity> rangeItems = world.getNearbyEntities(PluginUtils.centerLocation(hopper.getLocation()), suctionRange / 2.0, suctionRange / 2.0, suctionRange / 2.0, entity -> entity instanceof Item);
 
                     // @author Esophose
-                    chunkItems.forEach(item -> {
+                    rangeItems.forEach(entity -> {
+                        Item item = (Item) entity;
 
                         if (hopper.getFilterType() == FilterType.DESTROY && PluginUtils.itemFiltered(item.getItemStack(), hopper)) {
                             item.getWorld().spawnParticle(Particle.SMOKE_NORMAL, item.getLocation(), 3, 0.0, 0.0, 0.0, 0.0);

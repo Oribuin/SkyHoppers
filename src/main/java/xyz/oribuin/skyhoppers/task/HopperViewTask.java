@@ -1,16 +1,24 @@
 package xyz.oribuin.skyhoppers.task;
 
-import xyz.oribuin.skyhoppers.obj.SkyHopper;
-import xyz.oribuin.skyhoppers.util.PluginUtils;
 import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
+import xyz.oribuin.skyhoppers.SkyHoppersPlugin;
+import xyz.oribuin.skyhoppers.obj.SkyHopper;
+import xyz.oribuin.skyhoppers.util.PluginUtils;
 
 import java.util.*;
+
+import static xyz.oribuin.skyhoppers.util.PluginUtils.centerLocation;
 
 public class HopperViewTask extends BukkitRunnable {
 
     private final Map<UUID, SkyHopper> hopperViewers = new HashMap<>();
+    private final double suctionRange;
+
+    public HopperViewTask(final SkyHoppersPlugin plugin) {
+        this.suctionRange = plugin.getConfig().getDouble("suction-range");
+    }
 
     @Override
     public void run() {
@@ -30,11 +38,11 @@ public class HopperViewTask extends BukkitRunnable {
                     .forEach(location -> player.spawnParticle(Particle.REDSTONE, location.clone(), 1, 0.0, 0.0, 0.0, new Particle.DustOptions(Color.LIME, 1)));
 
             if (hopper.isEnabled()) {
-                final Location centerLocation = PluginUtils.centerLocation(hopper.getLocation()).clone();
+                final Location centerLocation = centerLocation(hopper.getLocation()).clone();
                 centerLocation.subtract(0.0, 0.5, 0.0);
 
                 for (int i = 0; i < 5; i++)
-                    player.spawnParticle(Particle.REDSTONE, centerLocation, 2, 2, 0.0, 2, 0.0, new Particle.DustOptions(Color.PURPLE, 1));
+                    player.spawnParticle(Particle.REDSTONE, centerLocation, 2, suctionRange / 3, 0.0, suctionRange / 3, 0.0, new Particle.DustOptions(Color.PURPLE, 1));
             }
 
             // Show Linked Container Outline
@@ -47,11 +55,16 @@ public class HopperViewTask extends BukkitRunnable {
             }
 
             // Show Chunk Borders (Bedrock players cannot view chunk borders, This will help them visualize the borders of the chunk)
-            Chunk chunk = hopper.getLocation().getChunk();
-            final Location chunkCorner1 = new Location(chunk.getWorld(), chunk.getX() * 16, hopper.getLocation().getBlockY() - 3, chunk.getZ() * 16);
-            final Location chunkCorner2 = chunkCorner1.clone().add(16, 8, 16);
+            World world = hopper.getLocation().getWorld();
+            assert world != null;
 
-            this.getHollowCube(chunkCorner1, chunkCorner2, 1).stream()
+            Location min = hopper.getLocation().clone().subtract(suctionRange / 2.0, suctionRange / 2.0, suctionRange / 2.0);
+            min = centerLocation(min);
+            Location max = hopper.getLocation().clone().add(suctionRange / 2.0, suctionRange / 2.0, suctionRange / 2.0);
+            max = centerLocation(max);
+
+
+            this.getHollowCube(min, max, 1).stream()
                     .filter(loc -> loc.getWorld() != null)
                     .forEach(loc -> player.spawnParticle(Particle.REDSTONE, loc.clone(), 1, 0.0, 0.0, 0.0, new Particle.DustOptions(Color.AQUA, 1)));
         });

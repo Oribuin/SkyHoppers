@@ -1,9 +1,15 @@
 package xyz.oribuin.skyhoppers.util;
 
+import dev.rosewood.rosegarden.utils.HexUtils;
+import dev.rosewood.rosegarden.utils.StringPlaceholders;
+import org.apache.commons.lang3.StringUtils;
 import xyz.oribuin.skyhoppers.obj.SkyHopper;
 import org.bukkit.Location;
 import org.bukkit.block.Container;
 import org.bukkit.inventory.ItemStack;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 public final class PluginUtils {
 
@@ -38,17 +44,17 @@ public final class PluginUtils {
      * Check if an item is available through the filter.
      *
      * @param item   The item being filtered.
-     * @param hopper The custom hopper with the item filter
+     * @param skyHopper The custom hopper with the item filter
      * @return true if the item has been filtered.
      */
-    public static boolean itemFiltered(ItemStack item, SkyHopper hopper) {
-        switch (hopper.getFilterType()) {
+    public static boolean itemFiltered(ItemStack item, SkyHopper skyHopper) {
+        switch (skyHopper.getFilterType()) {
             case WHITELIST -> {
-                return !hopper.getFilterItems().contains(item.getType());
+                return !skyHopper.getFilterItems().contains(item.getType());
             }
 
             case BLACKLIST, DESTROY -> {
-                return hopper.getFilterItems().contains(item.getType());
+                return skyHopper.getFilterItems().contains(item.getType());
             }
 
         }
@@ -82,4 +88,15 @@ public final class PluginUtils {
         return loc;
     }
 
+    public static String format(String text, StringPlaceholders placeholders) {
+        return HexUtils.colorify(placeholders.apply(text));
+    }
+
+    public static List<String> format(List<String> text, StringPlaceholders placeholders) {
+        return text.stream().map(line -> format(line, placeholders)).collect(Collectors.toList());
+    }
+
+    public static String formatEnum(String text) {
+        return StringUtils.capitalize(text.replace("_", " ").toLowerCase());
+    }
 }

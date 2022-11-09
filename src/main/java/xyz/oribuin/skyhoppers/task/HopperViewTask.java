@@ -1,53 +1,74 @@
 package xyz.oribuin.skyhoppers.task;
 
-import org.bukkit.*;
+import dev.rosewood.rosegarden.RosePlugin;
+import org.bukkit.Bukkit;
+import org.bukkit.Color;
+import org.bukkit.Location;
+import org.bukkit.Particle;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
-import xyz.oribuin.skyhoppers.SkyHoppersPlugin;
+import xyz.oribuin.skyhoppers.manager.ConfigurationManager.Settings;
+import xyz.oribuin.skyhoppers.manager.HopperManager;
 import xyz.oribuin.skyhoppers.obj.SkyHopper;
 import xyz.oribuin.skyhoppers.util.PluginUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import static xyz.oribuin.skyhoppers.util.PluginUtils.centerLocation;
 
 public class HopperViewTask extends BukkitRunnable {
 
-    private final Map<UUID, SkyHopper> hopperViewers = new HashMap<>();
+    private final HopperManager manager;
     private final double suctionRange;
 
-    public HopperViewTask(final SkyHoppersPlugin plugin) {
-        this.suctionRange = plugin.getConfig().getDouble("suction-range");
+    public HopperViewTask(final RosePlugin plugin) {
+        this.manager = plugin.getManager(HopperManager.class);
+        this.suctionRange = Settings.SUCTION_RANGE.getDouble();
     }
 
     @Override
     public void run() {
-        this.hopperViewers.forEach((uuid, hopper) -> {
-            if (hopper.getLocation() == null)
+
+        for (Map.Entry<UUID, SkyHopper> entry : this.manager.getHopperViewers().entrySet()) {
+            // We get this again so the visualizer will update if changed.
+            SkyHopper skyHopper = this.manager.getHopperFromCache(entry.getValue().getLocation());
+
+            if (entry.getKey() == null || skyHopper == null)
                 return;
 
-            final Player player = Bukkit.getPlayer(uuid);
-            if (player == null)
+            final Player player = Bukkit.getPlayer(entry.getKey());
+            if (player == null) {
                 return;
+            }
+
+            final Location hopperLocation = skyHopper.getLocation();
+
+            if (hopperLocation == null || !hopperLocation.getWorld().equals(player.getWorld())) {
+                return;
+            }
 
             // Show hopper outline
-            final Location hopperCorner1 = PluginUtils.getBlockLoc(hopper.getLocation()).clone();
+            final Location hopperCorner1 = PluginUtils.getBlockLoc(skyHopper.getLocation()).clone();
             final Location hopperCorner2 = hopperCorner1.clone().add(1, 1, 1);
             this.getHollowCube(hopperCorner1, hopperCorner2, 0.5).stream()
                     .filter(loc -> loc.getWorld() != null)
                     .forEach(location -> player.spawnParticle(Particle.REDSTONE, location.clone(), 1, 0.0, 0.0, 0.0, new Particle.DustOptions(Color.LIME, 1)));
 
-            if (hopper.isEnabled()) {
-                final Location centerLocation = centerLocation(hopper.getLocation()).clone();
+            if (skyHopper.isEnabled()) {
+                final Location centerLocation = centerLocation(skyHopper.getLocation()).clone();
                 centerLocation.subtract(0.0, 0.5, 0.0);
 
                 for (int i = 0; i < 5; i++)
-                    player.spawnParticle(Particle.REDSTONE, centerLocation, 2, suctionRange / 3, 0.0, suctionRange / 3, 0.0, new Particle.DustOptions(Color.PURPLE, 1));
+                    player.spawnParticle(Particle.REDSTONE, centerLocation, 2, suctionRange / 5, 0.0, suctionRange / 5, 0.0, new Particle.DustOptions(Color.PURPLE, 1));
             }
 
             // Show Linked Container Outline
-            if (hopper.getLinked() != null) {
-                final Location corner1 = PluginUtils.getBlockLoc(hopper.getLinked().getLocation());
+            if (skyHopper.getLinked() != null) {
+                final Location corner1 = PluginUtils.getBlockLoc(skyHopper.getLinked().getLocation());
                 final Location corner2 = corner1.clone().add(1, 1, 1);
                 this.getHollowCube(corner1, corner2, 0.5).stream()
                         .filter(loc -> loc.getWorld() != null)
@@ -55,19 +76,18 @@ public class HopperViewTask extends BukkitRunnable {
             }
 
             // Show Chunk Borders (Bedrock players cannot view chunk borders, This will help them visualize the borders of the chunk)
-            World world = hopper.getLocation().getWorld();
-            assert world != null;
-
-            Location min = hopper.getLocation().clone().subtract(suctionRange / 2.0, suctionRange / 2.0, suctionRange / 2.0);
+            Location min = skyHopper.getLocation().clone().subtract(suctionRange / 2.0, suctionRange / 2.0, suctionRange / 2.0);
             min = centerLocation(min);
-            Location max = hopper.getLocation().clone().add(suctionRange / 2.0, suctionRange / 2.0, suctionRange / 2.0);
+            Location max = skyHopper.getLocation().clone().add(suctionRange / 2.0, suctionRange / 2.0, suctionRange / 2.0);
             max = centerLocation(max);
 
 
             this.getHollowCube(min, max, 1).stream()
                     .filter(loc -> loc.getWorld() != null)
                     .forEach(loc -> player.spawnParticle(Particle.REDSTONE, loc.clone(), 1, 0.0, 0.0, 0.0, new Particle.DustOptions(Color.AQUA, 1)));
-        });
+
+        }
+
     }
 
 
@@ -79,7 +99,7 @@ public class HopperViewTask extends BukkitRunnable {
      * @param particleDistance The distance between particles
      * @return The list of particle locations
      * @author Esophose
-     * @ https://github.com/Rosewood-Development/PlayerParticles/blob/master/src/main/java/dev/esophose/playerparticles/styles/ParticleStyleOutline.java#L86
+     * @ <a href="https://github.com/Rosewood-Development/PlayerParticles/blob/master/src/main/java/dev/esophose/playerparticles/styles/ParticleStyleOutline.java#L86">...</a>
      */
     private List<Location> getHollowCube(Location corner1, Location corner2, double particleDistance) {
         List<Location> result = new ArrayList<>();
@@ -113,10 +133,6 @@ public class HopperViewTask extends BukkitRunnable {
         }
 
         return result;
-    }
-
-    public Map<UUID, SkyHopper> getHopperViewers() {
-        return hopperViewers;
     }
 
 }

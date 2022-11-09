@@ -1,67 +1,84 @@
 package xyz.oribuin.skyhoppers;
 
-import xyz.oribuin.orilibrary.OriPlugin;
-import xyz.oribuin.skyhoppers.command.HopperCommand;
+import dev.rosewood.rosegarden.RosePlugin;
+import dev.rosewood.rosegarden.manager.Manager;
+import dev.rosewood.rosegarden.utils.NMSUtil;
+import org.bukkit.Bukkit;
+import org.bukkit.plugin.PluginManager;
 import xyz.oribuin.skyhoppers.listener.BlockListeners;
 import xyz.oribuin.skyhoppers.listener.HopperListeners;
 import xyz.oribuin.skyhoppers.listener.PlayerListeners;
+import xyz.oribuin.skyhoppers.manager.CommandManager;
+import xyz.oribuin.skyhoppers.manager.ConfigurationManager;
+import xyz.oribuin.skyhoppers.manager.ConfigurationManager.Settings;
 import xyz.oribuin.skyhoppers.manager.DataManager;
+import xyz.oribuin.skyhoppers.manager.HookManager;
 import xyz.oribuin.skyhoppers.manager.HopperManager;
-import xyz.oribuin.skyhoppers.manager.MessageManager;
+import xyz.oribuin.skyhoppers.manager.LocaleManager;
 import xyz.oribuin.skyhoppers.obj.SkyHopper;
 import xyz.oribuin.skyhoppers.task.HopperViewTask;
 import xyz.oribuin.skyhoppers.task.ItemTransferTask;
 import xyz.oribuin.skyhoppers.task.SuctionTask;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-public class SkyHoppersPlugin extends OriPlugin {
+public class SkyHoppersPlugin extends RosePlugin {
 
     private final Map<UUID, SkyHopper> linkingPlayers = new HashMap<>();
-    private Map<UUID, SkyHopper> hopperViewers;
 
-    @Override
-    public void enablePlugin() {
+    private static SkyHoppersPlugin instance;
 
-        // Load Plugin Managers Asynchronously
-        this.getManager(DataManager.class);
-        this.getManager(HopperManager.class);
-        this.getManager(MessageManager.class);
-
-        // Register Plugin Listeners
-        this.getServer().getPluginManager().registerEvents(new BlockListeners(this), this);
-        this.getServer().getPluginManager().registerEvents(new HopperListeners(this), this);
-        this.getServer().getPluginManager().registerEvents(new PlayerListeners(this), this);
-
-        // Register Plugin Commands
-        new HopperCommand(this);
-
-        // Register Plugin Scheduled Tasks
-        this.registerTasks();
+    public static SkyHoppersPlugin getInstance() {
+        return instance;
     }
 
-    public void registerTasks() {
-        new SuctionTask(this).runTaskTimer(this, 0L, 10L);
-        HopperViewTask hopperViewTask = new HopperViewTask(this);
-        this.hopperViewers = hopperViewTask.getHopperViewers();
-        hopperViewTask.runTaskTimerAsynchronously(this, 0, 5L);
-
-        new ItemTransferTask(this).runTaskTimer(this, 0, this.getConfig().getLong("transfer-ticks"));
+    public SkyHoppersPlugin() {
+        super(-1, -1, ConfigurationManager.class, DataManager.class, LocaleManager.class, CommandManager.class);
+        instance = this;
     }
 
     @Override
-    public void disablePlugin() {
+    protected void enable() {
 
+        if (NMSUtil.getVersionNumber() < 17) {
+            this.getLogger().severe("This plugin requires 1.17 or higher, Disabling plugin!");
+            this.getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+
+        // Register Listeners
+        final PluginManager pluginManager = this.getServer().getPluginManager();
+        pluginManager.registerEvents(new BlockListeners(this), this);
+        pluginManager.registerEvents(new PlayerListeners(this), this);
+        pluginManager.registerEvents(new HopperListeners(this), this);
+    }
+
+
+    @Override
+    public void reload() {
+        super.reload();
+
+        // Register Scheduled Tasks
+        new SuctionTask(this).runTaskTimer(this, 0L, Settings.TASKS_SUCTION.getLong()); // Sucks items into hoppers
+        new ItemTransferTask(this).runTaskTimer(this, 0L, Settings.TASKS_TRANSFER.getLong()); // Transfers items between hoppers
+        new HopperViewTask(this).runTaskTimerAsynchronously(this, 0L, Settings.TASKS_VISUALISER.getLong()); // Shows funny particles
+    }
+
+    @Override
+    protected void disable() {
+        Bukkit.getScheduler().cancelTasks(this);
+    }
+
+    @Override
+    protected List<Class<? extends Manager>> getManagerLoadPriority() {
+        return List.of(HopperManager.class, HookManager.class);
     }
 
     public Map<UUID, SkyHopper> getLinkingPlayers() {
         return linkingPlayers;
-    }
-
-    public Map<UUID, SkyHopper> getHopperViewers() {
-        return hopperViewers;
     }
 
 }

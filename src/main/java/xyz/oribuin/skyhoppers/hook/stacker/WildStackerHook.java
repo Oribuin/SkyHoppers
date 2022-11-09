@@ -3,13 +3,8 @@ package xyz.oribuin.skyhoppers.hook.stacker;
 import com.bgsoftware.wildstacker.api.WildStackerAPI;
 import com.bgsoftware.wildstacker.api.objects.StackedItem;
 import org.bukkit.entity.Item;
-import xyz.oribuin.skyhoppers.hook.StackerHook;
 
 public class WildStackerHook implements StackerHook {
-    @Override
-    public String pluginName() {
-        return "WildStacker";
-    }
 
     @Override
     public int getItemAmount(Item item) {
@@ -31,4 +26,5 @@ public class WildStackerHook implements StackerHook {
 
         item.getItemStack().setAmount(amount);
     }
+
 }

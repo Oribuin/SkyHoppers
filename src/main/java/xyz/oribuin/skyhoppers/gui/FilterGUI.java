@@ -1,164 +1,155 @@
 package xyz.oribuin.skyhoppers.gui;
 
-import xyz.oribuin.skyhoppers.SkyHoppersPlugin;
-import xyz.oribuin.skyhoppers.manager.HopperManager;
-import xyz.oribuin.skyhoppers.obj.FilterType;
-import xyz.oribuin.skyhoppers.obj.SkyHopper;
-import org.apache.commons.lang.StringUtils;
+import dev.triumphteam.gui.builder.item.ItemBuilder;
+import dev.triumphteam.gui.guis.Gui;
+import dev.triumphteam.gui.guis.GuiItem;
+import dev.triumphteam.gui.guis.PaginatedGui;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
-import org.bukkit.inventory.ItemStack;
-import xyz.oribuin.gui.Item;
-import xyz.oribuin.gui.PaginatedGui;
+import xyz.oribuin.skyhoppers.SkyHoppersPlugin;
+import xyz.oribuin.skyhoppers.manager.HopperManager;
+import xyz.oribuin.skyhoppers.manager.LocaleManager;
+import xyz.oribuin.skyhoppers.obj.FilterType;
+import xyz.oribuin.skyhoppers.obj.SkyHopper;
+import xyz.oribuin.skyhoppers.util.ItemMaker;
+import xyz.oribuin.skyhoppers.util.PluginUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.ListIterator;
 
-import static xyz.oribuin.orilibrary.util.HexUtils.colorify;
-
 public class FilterGUI {
 
     private final SkyHoppersPlugin plugin;
-    private final SkyHopper hopper;
-    private final HopperManager hopperManager;
+    private final HopperManager manager;
+    private final LocaleManager locale;
+    private final SkyHopper skyHopper;
 
-    private final List<FilterType> filterTypes;
+    private final List<FilterType> filters;
     private ListIterator<FilterType> iterator;
-    private FilterType currentType;
+    private FilterType current;
 
-    public FilterGUI(final SkyHoppersPlugin plugin, SkyHopper hopper) {
+    public FilterGUI(final SkyHoppersPlugin plugin, SkyHopper skyHopper) {
         this.plugin = plugin;
-        this.hopper = hopper;
-        this.hopperManager = plugin.getManager(HopperManager.class);
+        this.manager = this.plugin.getManager(HopperManager.class);
+        this.locale = this.plugin.getManager(LocaleManager.class);
+        this.skyHopper = skyHopper;
 
-        // List inception
-        this.filterTypes = new ArrayList<>(Arrays.asList(FilterType.values()));
-        filterTypes.removeIf(filterType -> filterType == hopper.getFilterType());
-        filterTypes.add(0, hopper.getFilterType());
+        this.filters = new ArrayList<>(Arrays.asList(FilterType.values()));
+        filters.removeIf(filterType -> filterType == skyHopper.getFilterType());
+        filters.add(0, skyHopper.getFilterType());
 
-        this.iterator = new ArrayList<>(filterTypes).listIterator();
-        this.currentType = iterator.next();
+        this.iterator = new ArrayList<>(filters).listIterator();
+        this.current = iterator.next();
     }
 
-    public void createGui(Player player) {
+    public void openGUI(Player player) {
+        PaginatedGui gui = Gui.paginated()
+                .title(this.text("Hopper Filters"))
+                .disableAllInteractions()
+                .rows(5)
+                .create();
 
-        // Define all the page slots.
-        final List<Integer> pageSlots = new ArrayList<>();
-        for (int i = 9; i < 36; i++)
-            pageSlots.add(i);
+        gui.setCloseGuiAction(event -> this.manager.saveHopperBlock(skyHopper));
+        gui.setPlayerInventoryAction(event -> {
+            List<Material> materials = new ArrayList<>(this.skyHopper.getFilterItems());
 
-        final PaginatedGui gui = new PaginatedGui(45, "Hopper Filter: " + StringUtils.capitalize(hopper.getFilterType().name().toLowerCase()), pageSlots);
-        gui.setDefaultClickFunction(event -> {
+            if (event.getCurrentItem() == null || event.getCurrentItem().getType() == Material.AIR) {
+                return;
+            }
 
-            // Stop the ability to yoink items.
-            event.setResult(Event.Result.DENY);
+            // disableAllInteractions doesn't do anything here, so we have to do it manually.
             event.setCancelled(true);
+            event.setResult(Event.Result.DENY);
             ((Player) event.getWhoClicked()).updateInventory();
 
-            // Don't remove any item that isnt in the page gui
-            if (!pageSlots.contains(event.getSlot())) {
-                return;
-            }
 
-            // Check if they clicked ona valid item.
-            final ItemStack item = event.getCurrentItem();
-            if (item == null || item.getType() == Material.AIR)
-                return;
-
-            // Remove the item from the hopper's current filtered items.
-            // Don't update gui if nothing was removed.
-            if (this.hopper.getFilterItems().remove(item.getType())) {
-                // Update the gui with the new items
-                this.addFilterBlocks(gui);
-                gui.update();
-            }
+            materials.add(event.getCurrentItem().getType());
+            this.skyHopper.setFilterItems(materials);
+            this.addFilterItems(gui);
         });
 
-        gui.setPersonalClickAction(event -> {
+        gui.setItem(List.of(0, 8, 36, 44), new GuiItem(ItemMaker.filler(Material.CYAN_STAINED_GLASS_PANE)));
+        gui.setItem(List.of(1, 2, 6, 7, 9, 17, 27, 35, 37, 38, 42, 43), new GuiItem(ItemMaker.filler(Material.LIGHT_BLUE_STAINED_GLASS_PANE)));
+        gui.setItem(List.of(3, 5, 18, 26, 39, 41), new GuiItem(ItemMaker.filler(Material.BLUE_STAINED_GLASS_PANE)));
+        gui.setItem(40,
+                ItemBuilder.from(Material.BARRIER)
+                        .name(this.text("<#FF4F58><bold>Go Back!"))
+                        .lore(this.text(" <white>| <gray>Click to go back to the"), this.text(" <white>| <gray>main hopper menu."))
+                        .asGuiItem(e -> new HopperGUI(this.plugin).openGUI(player, this.skyHopper))
+        );
 
-            // Run default function for the player's inventory click event.
-            gui.getDefaultClickFunction().accept(event);
-
-            // Get the item they clicked and make sure it's a valid item
-            final ItemStack currentItem = event.getCurrentItem();
-            if (currentItem == null || currentItem.getType() == Material.AIR)
-                return;
-
-            // Don't try to add any items that are already in the filtered items list.
-            List<Material> filterItems = hopper.getFilterItems();
-            if (filterItems.contains(currentItem.getType()))
-                return;
-
-            hopper.getFilterItems().add(currentItem.getType());
-            // Update the gui with the new items
-            this.addFilterBlocks(gui);
-            gui.update();
-        });
-
-        gui.setCloseAction(event -> this.hopperManager.saveHopper(hopper));
-
-        gui.setItems(Arrays.asList(0, 8, 36, 44), Item.filler(Material.CYAN_STAINED_GLASS_PANE));
-        gui.setItems(Arrays.asList(1, 2, 6, 7, 37, 38, 42, 43), Item.filler(Material.LIGHT_BLUE_STAINED_GLASS_PANE));
-        gui.setItems(Arrays.asList(3, 4, 5, 39, 40, 41), Item.filler(Material.GRAY_STAINED_GLASS_PANE));
-        gui.setItem(40, new Item.Builder(Material.BARRIER)
-                .setName(colorify("#FF4F58&lGo Back!"))
-                .setLore(colorify("&7Click to go back to"))
-                .create(), event -> new HopperGUI(this.plugin).create(hopper, (Player) event.getWhoClicked()));
-
-        gui.setItem(38, new Item.Builder(Material.PAPER)
-                .setName(colorify("#FF4F58&lBack Page"))
-                .setLore(colorify("&7Click to go to"), colorify("&7the previous page!"))
-                .create(), event -> gui.previous(event.getWhoClicked()));
-
-        gui.setItem(42, new Item.Builder(Material.PAPER)
-                .setName(colorify("#FF4F58&lNext Page"))
-                .setLore(colorify("&7Click to go to"), colorify("&7the next page!"))
-                .create(), event -> gui.next(event.getWhoClicked()));
-
-        this.addHopperItem(gui);
-        this.addFilterBlocks(gui);
+        this.setFilterItem(gui);
+        this.addFilterItems(gui);
 
         gui.open(player);
+
     }
 
-    /**
-     * Add the item to switch the current hopper filter.
-     *
-     * @param gui The gui the item is being added to.
-     */
-    private void addHopperItem(PaginatedGui gui) {
-        gui.setItem(4, new Item.Builder(Material.HOPPER)
-                .setName(colorify("#99ff99&lSwitch Filter &7| &f" + StringUtils.capitalize(hopper.getFilterType().name().toLowerCase())))
-                .setLore(colorify("&7" + hopper.getFilterType().getDesc()))
-                .create(), event -> {
+    public void addFilterItems(PaginatedGui gui) {
+        List<Material> materials = new ArrayList<>(this.skyHopper.getFilterItems());
 
-            if (!iterator.hasNext()) {
-                iterator = new ArrayList<>(this.filterTypes).listIterator();
-            }
+        gui.clearPageItems();
+        materials.forEach(material -> gui.addItem(
+                ItemBuilder.from(material)
+                        .name(this.text("<#FF4F58><bold>" + material.name()))
+                        .lore(this.text(" <white>| <gray>Click to remove this item from the filter."))
+                        .asGuiItem(e -> {
+                            this.skyHopper.getFilterItems().remove(material);
+                            this.manager.saveHopperBlock(this.skyHopper);
+                            this.openGUI((Player) e.getWhoClicked());
+                        })
+        ));
 
-            currentType = iterator.next();
-            this.hopper.setFilterType(currentType);
-            this.addHopperItem(gui);
-            gui.update();
-            gui.updateTitle("Hopper Filter: " + StringUtils.capitalize(hopper.getFilterType().name().toLowerCase()));
-        });
+        gui.update();
     }
 
-    /**
-     * Add all the filtered items from the gui into the menu
-     *
-     * @param gui The gui the filter blocks are being added to.
-     */
-    private void addFilterBlocks(PaginatedGui gui) {
+    public void setFilterItem(PaginatedGui gui) {
+        gui.setItem(4, ItemBuilder.from(Material.HOPPER)
+                .name(this.text("<#99ff99><bold>Change Item Filter Type"))
+                .lore(
+                        this.text(" <white>| <gray>Click to switch the filter type."),
+                        this.text(" <white>| <gray>Current: <white>" + PluginUtils.formatEnum(this.skyHopper.getFilterType().name())),
+                        this.text(" <white>| <gray>Next: <white>" + PluginUtils.formatEnum(this.getNextFilter().name())),
+                        this.text(" <white>|"),
+                        this.text(" <white>| <gray>" + this.skyHopper.getFilterType().getDesc())
+                )
+                .glow(true)
+                .asGuiItem(event -> {
+                    if (!iterator.hasNext()) {
+                        iterator = new ArrayList<>(this.filters).listIterator();
+                    }
 
-        // Remove page items so there's no item duplication.
-        gui.getPageItems().clear();
-        // Add back all the filtered items into the gui
-        this.hopper.getFilterItems().forEach(material -> gui.addPageItem(new ItemStack(material), event -> this.hopper.getFilterItems().remove(material)));
+                    current = iterator.next();
+                    this.skyHopper.setFilterType(current);
+                    this.setFilterItem(gui);
+                }));
 
+        gui.update();
+    }
+
+    public FilterType getNextFilter() {
+        // Get the next filter type from the list from the current filter type.
+        int index = this.filters.indexOf(this.skyHopper.getFilterType()) + 1;
+
+        // If the index is greater than the size of the list, reset the index to 0.
+        if (index >= this.filters.size()) {
+            index = 0;
+        }
+
+        // Return the next filter type.
+        return this.filters.get(index);
+    }
+
+    private Component text(String text) {
+        return MiniMessage.miniMessage().deserialize(text)
+                .decoration(TextDecoration.ITALIC, false)
+                .asComponent();
     }
 
 }

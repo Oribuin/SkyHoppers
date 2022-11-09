@@ -3,14 +3,8 @@ package xyz.oribuin.skyhoppers.hook.stacker;
 import dev.rosewood.rosestacker.api.RoseStackerAPI;
 import dev.rosewood.rosestacker.stack.StackedItem;
 import org.bukkit.entity.Item;
-import xyz.oribuin.skyhoppers.hook.StackerHook;
 
 public class RoseStackerHook implements StackerHook {
-
-    @Override
-    public String pluginName() {
-        return "RoseStacker";
-    }
 
     @Override
     public int getItemAmount(Item item) {

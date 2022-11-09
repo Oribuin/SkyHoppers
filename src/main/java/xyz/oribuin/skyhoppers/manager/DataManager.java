@@ -1,152 +1,103 @@
 package xyz.oribuin.skyhoppers.manager;
 
-import xyz.oribuin.skyhoppers.SkyHoppersPlugin;
-import xyz.oribuin.skyhoppers.obj.SkyHopper;
-import xyz.oribuin.skyhoppers.util.PluginUtils;
+import dev.rosewood.rosegarden.RosePlugin;
+import dev.rosewood.rosegarden.database.DataMigration;
+import dev.rosewood.rosegarden.manager.AbstractDataManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.World;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.scheduler.BukkitTask;
-import xyz.oribuin.orilibrary.database.DatabaseConnector;
-import xyz.oribuin.orilibrary.database.MySQLConnector;
-import xyz.oribuin.orilibrary.database.SQLiteConnector;
-import xyz.oribuin.orilibrary.manager.Manager;
-import xyz.oribuin.orilibrary.util.FileUtils;
+import xyz.oribuin.skyhoppers.database.migration._1_CreateInitialTables;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.function.Consumer;
+import java.util.ArrayList;
+import java.util.List;
 
-public class DataManager extends Manager {
+public class DataManager extends AbstractDataManager {
 
-    private final SkyHoppersPlugin plugin = (SkyHoppersPlugin) this.getPlugin();
-    private final Map<Location, SkyHopper> cachedHoppers = new HashMap<>();
-    private final HopperManager hopperManager;
-    private DatabaseConnector connector = null;
+    private final List<Location> hopperLocations = new ArrayList<>();
 
-    public DataManager(SkyHoppersPlugin plugin) {
-        super(plugin);
-        this.hopperManager = this.plugin.getManager(HopperManager.class);
+    public DataManager(RosePlugin rosePlugin) {
+        super(rosePlugin);
     }
 
-    @Override
-    public void enable() {
+    /**
+     * Load the data from the database
+     */
+    public void loadHoppers() {
+        this.hopperLocations.clear();
 
-        final FileConfiguration config = this.plugin.getConfig();
-        if (config.getBoolean("mysql.enabled")) {
-            String hostName = config.getString("mysql.host");
-            int port = config.getInt("mysql.port");
-            String dbname = config.getString("mysql.dbname");
-            String username = config.getString("mysql.username");
-            String password = config.getString("mysql.password");
-            boolean ssl = config.getBoolean("mysql.ssl");
+        this.databaseConnector.connect(connection -> {
+            final String query = "SELECT * FROM " + this.getTablePrefix() + "hoppers";
+            try (var statement = connection.prepareStatement(query)) {
+                var results = statement.executeQuery();
+                while (results.next()) {
+                    var x = results.getInt("x");
+                    var y = results.getInt("y");
+                    var z = results.getInt("z");
+                    var world = results.getString("world");
 
-            this.connector = new MySQLConnector(this.plugin, hostName, port, dbname, username, password, ssl);
-        } else {
-            FileUtils.createFile(this.plugin, "skyhoppers.db");
-            this.connector = new SQLiteConnector(plugin, "skyhoppers.db");
-        }
-
-        this.async(task -> this.connector.connect(connection -> {
-            final String createTable = "CREATE TABLE IF NOT EXISTS skyhoppers_hoppers (world TEXT, x DOUBLE, y DOUBLE, z DOUBLE, PRIMARY KEY (world, x, y, z))";
-            connection.prepareStatement(createTable).executeUpdate();
-
-            this.cachedHoppers.clear();
-            try (PreparedStatement statement = connection.prepareStatement("SELECT * FROM skyhoppers_hoppers")) {
-                final ResultSet result = statement.executeQuery();
-
-                while (result.next()) {
-                    final World world = Bukkit.getWorld(result.getString("world"));
-                    final double x = result.getDouble("x");
-                    final double y = result.getDouble("y");
-                    final double z = result.getDouble("z");
-
-                    final Location loc = PluginUtils.getBlockLoc(new Location(world, x, y, z));
-
-                    this.plugin.getServer().getScheduler().runTask(plugin, () -> {
-                        final Optional<SkyHopper> customHopper = this.hopperManager.getHopperFromLocation(loc);
-                        if (customHopper.isEmpty()) {
-                            this.deleteHopper(loc);
-                            return;
-                        }
-
-                        this.cachedHoppers.put(loc, customHopper.get());
-                    });
-
+                    this.hopperLocations.add(new Location(Bukkit.getWorld(world), x, y, z));
                 }
             }
-        }));
 
+            this.rosePlugin.getLogger().info("Loaded " + this.hopperLocations.size() + " hoppers from the database.");
+        });
     }
 
     /**
-     * Save the hopper into the database of the plugin.
+     * Add a hopper location to the database
      *
-     * @param hopper The hopper that is being saved.
+     * @param location The location to add
      */
-    public void saveHopper(SkyHopper hopper) {
+    public void addHopper(Location location) {
+        this.hopperLocations.add(location);
 
-        if (hopper.getLocation() == null)
-            return;
-
-        final Location loc = PluginUtils.getBlockLoc(hopper.getLocation());
-        this.cachedHoppers.put(loc, hopper);
-
-        this.async(task -> this.connector.connect(connection -> {
-            final String query = "REPLACE INTO skyhoppers_hoppers (world, x, y, z) VALUES (?, ?, ?, ?)";
-
-            try (PreparedStatement statement = connection.prepareStatement(query)) {
-                statement.setString(1, Objects.requireNonNull(loc.getWorld()).getName());
-                statement.setDouble(2, loc.getX());
-                statement.setDouble(3, loc.getY());
-                statement.setDouble(4, loc.getZ());
+        this.async(() -> this.databaseConnector.connect(connection -> {
+            final String query = "INSERT INTO " + this.getTablePrefix() + "hoppers (x, y, z, world) VALUES (?, ?, ?, ?)";
+            try (var statement = connection.prepareStatement(query)) {
+                statement.setInt(1, location.getBlockX());
+                statement.setInt(2, location.getBlockY());
+                statement.setInt(3, location.getBlockZ());
+                statement.setString(4, location.getWorld().getName());
                 statement.executeUpdate();
             }
         }));
     }
 
     /**
-     * Delete a hopper from the plugin database.
+     * Remove a hopper location from the database
      *
-     * @param location The location of the hopper.
+     * @param location The location to remove
      */
-    public void deleteHopper(Location location) {
-        if (location == null)
-            return;
+    public void removeHopper(Location location) {
+        this.hopperLocations.remove(location);
 
-        final Location loc = PluginUtils.getBlockLoc(location);
-        this.cachedHoppers.remove(loc);
-
-        this.async(task -> this.connector.connect(connection -> {
-            final String query = "DELETE FROM skyhoppers_hoppers WHERE world = ? AND x = ? AND y = ? AND z = ?";
-            try (PreparedStatement statement = connection.prepareStatement(query)) {
-                statement.setString(1, Objects.requireNonNull(loc.getWorld()).getName());
-                statement.setDouble(2, loc.getX());
-                statement.setDouble(3, loc.getY());
-                statement.setDouble(4, loc.getZ());
+        this.async(() -> this.databaseConnector.connect(connection -> {
+            final String query = "DELETE FROM " + this.getTablePrefix() + "hoppers WHERE x = ? AND y = ? AND z = ? AND world = ?";
+            try (var statement = connection.prepareStatement(query)) {
+                statement.setInt(1, location.getBlockX());
+                statement.setInt(2, location.getBlockY());
+                statement.setInt(3, location.getBlockZ());
+                statement.setString(4, location.getWorld().getName());
                 statement.executeUpdate();
             }
         }));
+    }
+
+    public List<Location> getHopperLocations() {
+        return hopperLocations;
     }
 
     @Override
-    public void disable() {
-        if (this.connector != null) {
-            this.connector.closeConnection();
-        }
+    public List<Class<? extends DataMigration>> getDataMigrations() {
+        return List.of(_1_CreateInitialTables.class);
     }
 
-    public void async(Consumer<BukkitTask> callback) {
-        this.plugin.getServer().getScheduler().runTaskAsynchronously(plugin, callback);
-    }
-
-    public Map<Location, SkyHopper> getCachedHoppers() {
-        return cachedHoppers;
+    /**
+     * Run a database task asynchronously
+     *
+     * @param runnable The task to run
+     */
+    public void async(Runnable runnable) {
+        Bukkit.getScheduler().runTaskAsynchronously(this.rosePlugin, runnable);
     }
 
 }

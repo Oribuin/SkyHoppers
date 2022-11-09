@@ -1,289 +1,446 @@
 package xyz.oribuin.skyhoppers.manager;
 
 import com.google.gson.Gson;
-import org.apache.commons.lang.WordUtils;
+import dev.rosewood.rosegarden.RosePlugin;
+import dev.rosewood.rosegarden.manager.Manager;
+import dev.rosewood.rosegarden.utils.StringPlaceholders;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
 import org.bukkit.block.Container;
 import org.bukkit.block.Hopper;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
-import xyz.oribuin.gui.Item;
-import xyz.oribuin.orilibrary.manager.Manager;
-import xyz.oribuin.orilibrary.util.HexUtils;
-import xyz.oribuin.orilibrary.util.StringPlaceholders;
-import xyz.oribuin.skyhoppers.SkyHoppersPlugin;
-import xyz.oribuin.skyhoppers.hook.ProtectionHook;
-import xyz.oribuin.skyhoppers.hook.protection.BentoBoxHook;
-import xyz.oribuin.skyhoppers.hook.protection.IridiumHook;
-import xyz.oribuin.skyhoppers.hook.protection.WorldGuardHook;
+import org.jetbrains.annotations.NotNull;
+import xyz.oribuin.skyhoppers.manager.ConfigurationManager.Settings;
 import xyz.oribuin.skyhoppers.obj.FilterItems;
 import xyz.oribuin.skyhoppers.obj.FilterType;
+import xyz.oribuin.skyhoppers.obj.HopperKeys;
 import xyz.oribuin.skyhoppers.obj.SkyHopper;
+import xyz.oribuin.skyhoppers.util.ItemMaker;
 import xyz.oribuin.skyhoppers.util.PluginUtils;
 
-import java.util.*;
+import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class HopperManager extends Manager {
 
-    private final SkyHoppersPlugin plugin = (SkyHoppersPlugin) this.getPlugin();
-
-    // Define all the namespace keys.
-    private final NamespacedKey enabled = new NamespacedKey(this.plugin, "enabled");
-    private final NamespacedKey linked = new NamespacedKey(this.plugin, "linked");
-    private final NamespacedKey filterType = new NamespacedKey(this.plugin, "filtertype");
-    private final NamespacedKey filterItems = new NamespacedKey(this.plugin, "filteritems");
-
-    // Pre defining all the protection plugins
-    private final List<ProtectionHook> protectionHooks = Arrays.asList(new BentoBoxHook(), new IridiumHook(), new WorldGuardHook());
-
+    private final Map<Location, SkyHopper> hoppers = new HashMap<>();
+    private final Map<UUID, SkyHopper> hopperViewers = new HashMap<>();
     private final Gson gson = new Gson();
 
-    public HopperManager(SkyHoppersPlugin plugin) {
-        super(plugin);
+    private final DataManager dataManager = this.rosePlugin.getManager(DataManager.class);
+
+    public HopperManager(RosePlugin rosePlugin) {
+        super(rosePlugin);
+    }
+
+    @Override
+    public void reload() {
+        this.hoppers.clear();
+        this.hopperViewers.clear();
+
+        this.dataManager.loadHoppers();
+        this.rosePlugin.getServer().getScheduler().runTask(this.rosePlugin, this::updateHoppers);
+    }
+
+    public void updateHoppers() {
+        this.hoppers.clear();
+        this.dataManager.getHopperLocations().forEach(location -> this.hoppers.put(location, new SkyHopper(location)));
     }
 
     /**
-     * Save a hopper's values most recent linked container.
+     * Create a brand-new hopper
      *
-     * @param hopper The hopper to be saved.
+     * @param block The block to create the hopper at
      */
-    public void saveHopper(SkyHopper hopper) {
+    public void createHopper(Block block, Player owner) {
+        final SkyHopper skyHopper = new SkyHopper(block.getLocation());
 
-        if (hopper.getLocation() == null)
-            return;
+        skyHopper.setOwner(owner.getUniqueId());
+        this.dataManager.addHopper(block.getLocation());
+        this.saveHopperBlock(skyHopper);
 
-        final Block hopperBlock = hopper.getLocation().getBlock();
-        if (!(hopperBlock.getState() instanceof Hopper container))
-            return;
-
-        final PersistentDataContainer pdc = container.getPersistentDataContainer();
-
-        // Why the hell spigot makes me have to update the container each change instead of doing it the way ItemMeta does it
-        // I will never understand but I digress.
-        pdc.set(enabled, PersistentDataType.INTEGER, booleanToInt(hopper.isEnabled()));
-        container.update();
-        pdc.set(filterType, PersistentDataType.STRING, hopper.getFilterType().name());
-        container.update();
-        pdc.set(filterItems, PersistentDataType.STRING, serializeMaterials(hopper.getFilterItems()));
-        container.update();
-
-        if (hopper.getLinked() != null)
-            pdc.set(linked, PersistentDataType.STRING, serializeLocation(hopper.getLinked().getLocation()));
-        else
-            pdc.remove(linked);
-
-        container.update();
-
-        final DataManager data = this.plugin.getManager(DataManager.class);
-        data.getCachedHoppers().put(PluginUtils.getBlockLoc(hopper.getLocation()), hopper);
-
-        final List<UUID> hopperViewers = this.plugin.getHopperViewers().entrySet().stream()
-                .filter(entry -> entry.getValue().getLocation() != null)
-                .filter(entry -> PluginUtils.getBlockLoc(entry.getValue().getLocation()).equals(PluginUtils.getBlockLoc(hopper.getLocation())))
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
-
-        hopperViewers.forEach(uuid -> this.plugin.getHopperViewers().put(uuid, hopper));
     }
 
     /**
-     * Get the Custom Hopper from a block.
+     * Remove a hopper
      *
-     * @param block The hopper tile entity
-     * @return An optional custom hopper.
+     * @param skyHopper The hopper to remove
      */
-    public Optional<SkyHopper> getHopperFromBlock(Hopper block) {
+    public void removeHopper(SkyHopper skyHopper) {
+        this.dataManager.removeHopper(skyHopper.getLocation());
+        this.hoppers.remove(skyHopper.getLocation());
+    }
 
-        final PersistentDataContainer container = block.getPersistentDataContainer();
+    /**
+     * Save a hopper container to the config
+     *
+     * @param skyHopper The hopper to save
+     */
+    public void saveHopperBlock(SkyHopper skyHopper) {
 
+        if (skyHopper.getLocation() == null)
+            return;
 
-        // Check if the tile entity is a custom hopper
-        if (!container.has(enabled, PersistentDataType.INTEGER))
-            return Optional.empty();
+        final Block hopperBlock = skyHopper.getLocation().getBlock();
+        org.bukkit.block.Hopper hopperState = (org.bukkit.block.Hopper) hopperBlock.getState();
 
-        final SkyHopper skyHopper = new SkyHopper();
-        skyHopper.setLocation(block.getLocation());
-        skyHopper.setEnabled(intToBoolean(container.get(enabled, PersistentDataType.INTEGER)));
-        skyHopper.setFilterType(FilterType.valueOf(container.getOrDefault(filterType, PersistentDataType.STRING, "WHITELIST")));
+        // I hate having to update every single time but I can't think of a better way to do this.
+        final PersistentDataContainer container = hopperState.getPersistentDataContainer();
 
-        if (container.get(filterItems, PersistentDataType.STRING) != null) {
-            skyHopper.setFilterItems(this.deserializeMaterials(container.get(filterItems, PersistentDataType.STRING)));
+        container.set(HopperKeys.ENABLED.getKey(), PersistentDataType.INTEGER, skyHopper.isEnabled() ? 1 : 0);
+        hopperState.update();
+
+        // Set the hopper owner
+        if (skyHopper.getOwner() != null) {
+            container.set(HopperKeys.OWNER.getKey(), PersistentDataType.STRING, skyHopper.getOwner().toString());
+            hopperState.update();
         }
 
-        final String serializedLocation = container.get(linked, PersistentDataType.STRING);
+        // Set the filter items
+        if (!skyHopper.getFilterItems().isEmpty()) {
+            container.set(HopperKeys.FILTER_ITEMS.getKey(), PersistentDataType.STRING, this.serializeMaterials(skyHopper.getFilterItems()));
+            hopperState.update();
+        }
+
+        // Set the filter type
+        container.set(HopperKeys.FILTER_TYPE.getKey(), PersistentDataType.STRING, skyHopper.getFilterType().name());
+        hopperState.update();
+
+        // Set the linked hopper
+        if (skyHopper.getLinked() != null) {
+            container.set(HopperKeys.LINKED.getKey(), PersistentDataType.STRING, serializeLocation(skyHopper.getLinked().getLocation()));
+        } else {
+            container.remove(HopperKeys.LINKED.getKey());
+        }
+
+        hopperState.update();
+        this.hoppers.put(PluginUtils.getBlockLoc(skyHopper.getLocation()), skyHopper);
+    }
+
+    /**
+     * Save a hopper into an itemstack
+     *
+     * @param itemStack The itemstack
+     * @param skyHopper The hopper
+     * @return The new itemstack with the hopper data
+     */
+    public ItemStack saveHopperItem(ItemStack itemStack, SkyHopper skyHopper) {
+        final ItemMeta meta = itemStack.getItemMeta();
+        if (meta == null)
+            return itemStack;
+
+        // I hate having to update every single time but I can't think of a better way to do this.
+        final PersistentDataContainer container = meta.getPersistentDataContainer();
+
+        container.set(HopperKeys.ENABLED.getKey(), PersistentDataType.INTEGER, skyHopper.isEnabled() ? 1 : 0);
+
+        // Set the hopper owner
+        if (skyHopper.getOwner() != null) {
+            container.set(HopperKeys.OWNER.getKey(), PersistentDataType.STRING, skyHopper.getOwner().toString());
+        }
+
+        // Set the filter items
+        if (!skyHopper.getFilterItems().isEmpty()) {
+            container.set(HopperKeys.FILTER_ITEMS.getKey(), PersistentDataType.STRING, this.serializeMaterials(skyHopper.getFilterItems()));
+        }
+
+        // Set the filter type
+        container.set(HopperKeys.FILTER_TYPE.getKey(), PersistentDataType.STRING, skyHopper.getFilterType().name());
+
+        // Set the linked hopper
+        if (skyHopper.getLinked() != null) {
+            container.set(HopperKeys.LINKED.getKey(), PersistentDataType.STRING, serializeLocation(skyHopper.getLinked().getLocation()));
+        } else {
+            container.remove(HopperKeys.LINKED.getKey());
+        }
+
+        itemStack.setItemMeta(meta);
+        return itemStack;
+    }
+
+    /**
+     * Get a hopper from a location
+     *
+     * @param location The location of the hopper
+     * @return The hopper object
+     */
+    @Nullable
+    public SkyHopper getHopper(Location location) {
+        return this.getHopper(location.getBlock());
+    }
+
+    @Nullable
+    public SkyHopper getHopperFromCache(@Nullable Location location) {
+        if (location == null)
+            return null;
+
+        return this.hoppers.get(PluginUtils.getBlockLoc(location));
+    }
+
+    /**
+     * Get a hopper from a block
+     *
+     * @param block The block of the hopper
+     * @return The hopper object
+     */
+    @Nullable
+    public SkyHopper getHopper(Block block) {
+        // Check if the block is a hopper
+        if (!(block.getState() instanceof org.bukkit.block.Hopper hopperState))
+            return null;
+
+        return this.getHopperFromContainer(hopperState.getPersistentDataContainer(), block.getLocation());
+    }
+
+    @Nullable
+    public SkyHopper getHopper(Hopper hopper) {
+        return this.getHopperFromContainer(hopper.getPersistentDataContainer(), hopper.getLocation());
+    }
+
+    /**
+     * Get a hopper from an itemstack
+     *
+     * @param itemStack The itemstack to get the hopper from
+     * @return The hopper object
+     */
+    public SkyHopper getHopper(ItemStack itemStack) {
+        if (itemStack == null || itemStack.getType() != Material.HOPPER)
+            return null;
+
+        final PersistentDataContainer container = itemStack.getItemMeta().getPersistentDataContainer();
+        return this.getHopperFromContainer(container, null);
+    }
+
+    /**
+     * Get a hopper from a container
+     *
+     * @param container The container of the hopper
+     * @param location  The location of the hopper
+     * @return The hopper object
+     */
+    public SkyHopper getHopperFromContainer(@NotNull PersistentDataContainer container, @Nullable Location location) {
+        Integer enabled = container.get(HopperKeys.ENABLED.getKey(), PersistentDataType.INTEGER);
+        if (enabled == null)
+            return null;
+
+        // Create the hopper object
+        SkyHopper skyHopper = new SkyHopper(location);
+
+        // Set the enabled state
+        skyHopper.setEnabled(enabled == 1);
+
+        // Set the filter type
+        skyHopper.setFilterType(FilterType.valueOf(container.get(HopperKeys.FILTER_TYPE.getKey(), PersistentDataType.STRING)));
+
+        // Set the filter items
+        if (container.has(HopperKeys.FILTER_ITEMS.getKey()))
+            skyHopper.setFilterItems(this.deserializeMaterials(container.get(HopperKeys.FILTER_ITEMS.getKey(), PersistentDataType.STRING)));
+
+        // Set the owner
+        if (container.has(HopperKeys.OWNER.getKey()))
+            skyHopper.setOwner(UUID.fromString(container.get(HopperKeys.OWNER.getKey(), PersistentDataType.STRING)));
+
+        // Set the linked hopper
+        final String serializedLocation = container.get(HopperKeys.LINKED.getKey(), PersistentDataType.STRING);
         if (serializedLocation == null) {
             skyHopper.setLinked(null);
         } else {
-
-            // No, I don't like this code either.
             Block linkedBlock = this.deserializeLocation(serializedLocation).getBlock();
-            if (!(linkedBlock.getState() instanceof Container linkedContainer))
+            if (!(linkedBlock.getState() instanceof org.bukkit.block.Container linkedHopperState))
                 skyHopper.setLinked(null);
             else
-                skyHopper.setLinked(linkedContainer);
-
+                skyHopper.setLinked(linkedHopperState);
         }
 
-        return Optional.of(skyHopper);
+        this.saveHopperBlock(skyHopper);
+        return skyHopper;
     }
 
     /**
-     * Get a custom hopper from an ItemStack
+     * Give a player a hopper as an item
      *
-     * @param item The Hopper ItemStack
-     * @return An optional custom hopper.
+     * @param skyHopper The hopper to give
+     * @param amount    The amount of hoppers to give
+     * @return The itemstack of the hopper
      */
-    public Optional<SkyHopper> getHopperFromItem(ItemStack item) {
-        final ItemMeta meta = item.getItemMeta();
-        if (meta == null)
-            return Optional.empty();
-
-        final PersistentDataContainer container = meta.getPersistentDataContainer();
-        if (!container.has(enabled, PersistentDataType.INTEGER))
-            return Optional.empty();
-
-        final SkyHopper hopper = new SkyHopper();
-        hopper.setEnabled(intToBoolean(container.get(enabled, PersistentDataType.INTEGER)));
-        hopper.setFilterType(FilterType.valueOf(container.getOrDefault(filterType, PersistentDataType.STRING, "WHITELIST")));
-
-        if (container.get(filterItems, PersistentDataType.STRING) != null) {
-            hopper.setFilterItems(this.deserializeMaterials(container.get(filterItems, PersistentDataType.STRING)));
-        }
-
-        final String serializedLocation = container.get(linked, PersistentDataType.STRING);
-        if (serializedLocation == null) {
-            hopper.setLinked(null);
-        } else {
-
-            // No, I don't like this code either.
-            Block linkedBlock = this.deserializeLocation(serializedLocation).getBlock();
-            if (!(linkedBlock.getState() instanceof Container linkedContainer))
-                hopper.setLinked(null);
-            else
-                hopper.setLinked(linkedContainer);
-
-        }
-
-        return Optional.of(hopper);
-    }
-
-    /**
-     * Get the Custom Hopper from a location.
-     *
-     * @param location The location of the hopper
-     * @return An optional custom hopper.
-     */
-    public Optional<SkyHopper> getHopperFromLocation(Location location) {
-        if (!(location.getBlock().getState() instanceof Hopper hopper))
-            return Optional.empty();
-
-        return this.getHopperFromBlock(hopper);
-    }
-
-    /**
-     * Get an hopper as the ItemStack Form.
-     *
-     * @param hopper The Hopper
-     * @return The Hopper as an ItemStack.
-     */
-    public ItemStack getHopperAsItem(SkyHopper hopper, int amount) {
-
-        // Define the Item's Values
-        final ItemStack item = new Item.Builder(Material.HOPPER)
-                .setName(this.format(hopper, plugin.getConfig().getString("hopper.name")))
-                .setLore(this.format(hopper, plugin.getConfig().getStringList("hopper.lore")))
-                .setFlags(ItemFlag.HIDE_ATTRIBUTES)
-                .glow(plugin.getConfig().getBoolean("hopper.glow"))
+    public ItemStack getHopperAsItem(SkyHopper skyHopper, int amount) {
+        final ItemStack itemStack = new ItemMaker(Material.HOPPER)
+                .setName(PluginUtils.format(Settings.HOPPER_ITEM_NAME.getString(), this.get(skyHopper)))
+                .setLore(PluginUtils.format(Settings.HOPPER_ITEM_LORE.getStringList(), this.get(skyHopper)))
+                .glow(Settings.HOPPER_ITEM_GLOW.getBoolean())
                 .setAmount(amount)
                 .create();
 
-        final ItemMeta meta = item.getItemMeta();
-        assert meta != null;
+        return this.saveHopperItem(itemStack, skyHopper);
+    }
 
-        // Set the Item's values.
-        final PersistentDataContainer container = meta.getPersistentDataContainer();
-        container.set(enabled, PersistentDataType.INTEGER, booleanToInt(hopper.isEnabled()));
-        container.set(filterType, PersistentDataType.STRING, hopper.getFilterType().name());
-
-        if (hopper.getFilterItems().size() > 0) {
-            final String serializedMaterials = serializeMaterials(hopper.getFilterItems());
-            container.set(filterItems, PersistentDataType.STRING, serializedMaterials);
+    /**
+     * Get all hoppers with a linked container
+     *
+     * @return A list of hoppers
+     */
+    public List<SkyHopper> getLinkedHoppers() {
+        List<SkyHopper> linkedHoppers = new ArrayList<>();
+        for (SkyHopper skyHopper : this.hoppers.values()) {
+            if (skyHopper.getLinked() != null)
+                linkedHoppers.add(skyHopper);
         }
 
-        if (hopper.getLinked() != null)
-            container.set(linked, PersistentDataType.STRING, serializeLocation(hopper.getLinked().getLocation()));
-
-        item.setItemMeta(meta);
-
-        return item;
+        return linkedHoppers;
     }
 
     /**
-     * Check if a player can build at a specified location
+     * Get a hopper from a container if linked
      *
-     * @param player   The player
-     * @param location The location where the building is taking palce
-     * @return True if teh player can build
+     * @param container The container to get the hopper from
+     * @return The hopper object
      */
-    public boolean canBuild(Player player, Location location) {
-        return this.protectionHooks.stream().allMatch(hook -> hook.canBuild(player, location));
+    public SkyHopper getHopperFromContainer(Container container) {
+        for (SkyHopper skyHopper : this.getLinkedHoppers()) {
+            Container linked = skyHopper.getLinked(); // it should never be null but intelli doesn't know that
+            if (linked != null && linked.getLocation().equals(container.getLocation()))
+                return skyHopper;
+        }
+
+        return null;
+
     }
 
     /**
-     * Check if a player can open a specific container
+     * Get placeholders for a hopper object
      *
-     * @param player   The player
-     * @param location The location of the container
-     * @return True if they can open it.
+     * @param skyHopper The hopper object
+     * @return The placeholders
      */
-    public boolean canOpen(Player player, Location location) {
-        return this.protectionHooks.stream().allMatch(hook -> hook.canOpen(player, location));
-    }
-
-    /**
-     * Get the placeholders for the hopper itself,
-     *
-     * @param skyHopper The hopper
-     * @return The placeholders for the hopper.
-     */
-    public StringPlaceholders getPlaceholders(SkyHopper skyHopper) {
+    public StringPlaceholders get(SkyHopper skyHopper) {
         return StringPlaceholders.builder()
-                .addPlaceholder("enabled", skyHopper.isEnabled() ? "Yes" : "No")
+                .addPlaceholder("enabled", skyHopper.isEnabled() ? "Enabled" : "Disabled")
+                .addPlaceholder("filter_type", PluginUtils.formatEnum(skyHopper.getFilterType().name()))
+                .addPlaceholder("owner", skyHopper.getOwner() == null ? "None" : Bukkit.getOfflinePlayer(skyHopper.getOwner()).getName())
                 .addPlaceholder("linked", PluginUtils.formatContainerLoc(skyHopper.getLinked()))
-                .addPlaceholder("filterType", WordUtils.capitalizeFully(skyHopper.getFilterType().name().toLowerCase()))
                 .build();
     }
 
+
     /**
-     * Format a message relating to hoppers with placeholders.
+     * Get a list of all hoppers
      *
-     * @param skyHopper The hopper
-     * @param message   The message
-     * @return A colorified message with hopper placeholer support.
+     * @return A list of all hoppers
      */
-    private String format(SkyHopper skyHopper, String message) {
-        return HexUtils.colorify(this.getPlaceholders(skyHopper).apply(message));
+    public List<SkyHopper> getHoppers() {
+        return new ArrayList<>(this.hoppers.values());
     }
 
     /**
-     * Format a message list relating to hoppers with placeholders.
+     * Get a list of all hoppers that are enabled
      *
-     * @param skyHopper The hopper
-     * @param message   The message list
-     * @return A colorified message list with hopper placeholer support.
+     * @return A list of all enabled hoppers
      */
-    private List<String> format(SkyHopper skyHopper, List<String> message) {
-        return message.stream().map(s -> format(skyHopper, s)).collect(Collectors.toList());
+    public List<SkyHopper> getEnabledHoppers() {
+        return this.hoppers.values().stream().filter(SkyHopper::isEnabled).collect(Collectors.toList());
+    }
+
+    /**
+     * Let a player visualise a hopper
+     *
+     * @param player    The player who
+     * @param skyHopper The hopper to add
+     */
+    public void addHopperViewer(Player player, SkyHopper skyHopper) {
+        this.hopperViewers.put(player.getUniqueId(), skyHopper);
+    }
+
+    /**
+     * Remove a player from the hopper viewer list
+     *
+     * @param player The player to remove
+     */
+    public void removeHopperViewer(Player player) {
+        this.hopperViewers.remove(player.getUniqueId());
+    }
+
+    /**
+     * Get the hopper a player is visualising
+     *
+     * @param player The player to get the hopper for
+     * @return The hopper the player is visualising
+     */
+    public SkyHopper getHopperViewer(Player player) {
+        return this.hopperViewers.get(player.getUniqueId());
+    }
+
+
+    /**
+     * Get a list of hoppers that are being visualised by a player
+     *
+     * @return A list of hoppers
+     */
+    public List<SkyHopper> getViewedHoppers() {
+        return new ArrayList<>(this.hopperViewers.values());
+    }
+
+    /**
+     * Get a list of all hoppers that are owned by a player
+     *
+     * @param owner The owner of the hoppers
+     * @return A list of all hoppers owned by the player
+     */
+    public List<SkyHopper> getHoppersByOwner(UUID owner) {
+        return this.hoppers.values().stream()
+                .filter(hopper -> hopper.getOwner() != null && hopper.getOwner().equals(owner))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get all hoppers that are owned by a player
+     *
+     * @param player The player to get the hoppers for
+     * @return A list of hoppers
+     */
+    public List<SkyHopper> getHoppersByOwner(Player player) {
+        return this.getHoppersByOwner(player.getUniqueId());
+    }
+
+    /**
+     * Convert a list of materials into a json array to store in a string.
+     *
+     * @param materials The location.
+     * @return The serialized location.
+     */
+    private String serializeMaterials(List<Material> materials) {
+        return gson.toJson(new FilterItems(materials.stream().map(Material::name).collect(Collectors.toList())));
+    }
+
+    /**
+     * Deserialize a Base64 Value into a Location
+     *
+     * @param serialized The serialized base64 value
+     * @return The deserialized location.
+     */
+    private List<Material> deserializeMaterials(final String serialized) {
+        if (serialized == null)
+            return new ArrayList<>();
+
+        return gson.fromJson(serialized, FilterItems.class).getFilterItems()
+                .stream()
+                .map(Material::matchMaterial)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -325,38 +482,13 @@ public class HopperManager extends Manager {
         return loc;
     }
 
-    /**
-     * Convert a list of materials into a json array to store in a string.
-     *
-     * @param materials The location.
-     * @return The serialized location.
-     */
-    private String serializeMaterials(List<Material> materials) {
-        return gson.toJson(new FilterItems(materials.stream().map(Material::name).collect(Collectors.toList())));
+    @Override
+    public void disable() {
+
     }
 
-    /**
-     * Deserialize a Base64 Value into a Location
-     *
-     * @param serialized The serialized base64 value
-     * @return The deserialized location.
-     */
-    private List<Material> deserializeMaterials(final String serialized) {
-        if (serialized == null)
-            return new ArrayList<>();
-
-        return gson.fromJson(serialized, FilterItems.class).getItems()
-                .stream()
-                .map(Material::matchMaterial)
-                .collect(Collectors.toList());
-    }
-
-    public boolean intToBoolean(int num) {
-        return Math.min(num, 1) == 1;
-    }
-
-    public int booleanToInt(boolean b) {
-        return b ? 1 : 0;
+    public Map<UUID, SkyHopper> getHopperViewers() {
+        return hopperViewers;
     }
 
 }

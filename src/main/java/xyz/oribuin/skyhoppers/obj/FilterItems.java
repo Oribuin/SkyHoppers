@@ -1,21 +1,23 @@
 package xyz.oribuin.skyhoppers.obj;
 
+import org.bukkit.Material;
+
 import java.util.List;
 
 public class FilterItems {
 
-    private List<String> items;
+    private List<String> filterItems;
 
-    public FilterItems(List<String> items) {
-        this.items = items;
+    public FilterItems(List<String> filterItems) {
+        this.filterItems = filterItems;
     }
 
-    public List<String> getItems() {
-        return items;
+    public List<String> getFilterItems() {
+        return filterItems;
     }
 
-    public void setItems(List<String> items) {
-        this.items = items;
+    public void setFilterItems(List<String> filterItems) {
+        this.filterItems = filterItems;
     }
 
 }

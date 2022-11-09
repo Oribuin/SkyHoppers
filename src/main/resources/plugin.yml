@@ -1,6 +1,6 @@
 name: SkyHoppers
 main: xyz.oribuin.skyhoppers.SkyHoppersPlugin
-version: '1.0.3'
+version: '@version@'
 api-version: '1.16'
 author: Oribuin
 description: A chunk hopper plugin with wireless transfer, item filters and chunk suction.
@@ -9,5 +9,7 @@ softdepend:
   - WildStacker
   - RoseStacker
   - BentoBox
+  - Lands
+  - Towny
   - WorldGuard
   - IridiumSkyblock

@@ -1,4 +1,4 @@
-package xyz.oribuin.skyhoppers.hook;
+package xyz.oribuin.skyhoppers.hook.protection;
 
 import org.bukkit.Location;
 import org.bukkit.entity.Player;

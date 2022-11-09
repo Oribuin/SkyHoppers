@@ -10,6 +10,7 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 public class SkyHopper {
 
@@ -22,13 +23,25 @@ public class SkyHopper {
     private FilterType filterType;
     @NotNull
     private List<Material> filterItems;
+    @Nullable
+    private UUID owner;
 
-    public SkyHopper() {
-        this.location = null;
+    public SkyHopper(Location location) {
+        this.location = location;
         this.enabled = true;
         this.linked = null;
         this.filterType = FilterType.BLACKLIST;
         this.filterItems = new ArrayList<>();
+        this.owner = null;
+    }
+
+    public SkyHopper() {
+        this.enabled = true;
+        this.location = null;
+        this.linked = null;
+        this.filterType = FilterType.BLACKLIST;
+        this.filterItems = new ArrayList<>();
+        this.owner = null;
     }
 
     public static List<Material> validContainers() {
@@ -91,4 +104,12 @@ public class SkyHopper {
         this.enabled = enabled;
     }
 
+    @Nullable
+    public UUID getOwner() {
+        return owner;
+    }
+
+    public void setOwner(@Nullable UUID owner) {
+        this.owner = owner;
+    }
 }

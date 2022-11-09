@@ -5,129 +5,111 @@ import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.World;
 import org.bukkit.block.Block;
-import org.bukkit.block.Hopper;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.jetbrains.annotations.NotNull;
 import xyz.oribuin.skyhoppers.SkyHoppersPlugin;
-import xyz.oribuin.skyhoppers.hook.StackerHook;
-import xyz.oribuin.skyhoppers.hook.stacker.RoseStackerHook;
-import xyz.oribuin.skyhoppers.hook.stacker.WildStackerHook;
-import xyz.oribuin.skyhoppers.manager.DataManager;
+import xyz.oribuin.skyhoppers.hook.stacker.StackerHook;
+import xyz.oribuin.skyhoppers.manager.ConfigurationManager.Settings;
+import xyz.oribuin.skyhoppers.manager.HookManager;
+import xyz.oribuin.skyhoppers.manager.HopperManager;
 import xyz.oribuin.skyhoppers.obj.FilterType;
 import xyz.oribuin.skyhoppers.obj.SkyHopper;
 import xyz.oribuin.skyhoppers.util.PluginUtils;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Stream;
 
 public class SuctionTask extends BukkitRunnable {
 
-    private final DataManager data;
+    private final HopperManager manager;
     private final StackerHook stackerHook;
     private final double suctionRange;
 
     public SuctionTask(final SkyHoppersPlugin plugin) {
-        this.data = plugin.getManager(DataManager.class);
-        this.suctionRange = plugin.getConfig().getDouble("suction-range");
-
-        stackerHook = Stream.of(new RoseStackerHook(), new WildStackerHook())
-                .filter(x -> plugin.getServer().getPluginManager().isPluginEnabled(x.pluginName()))
-                .findAny()
-                .orElse(null);
+        this.manager = plugin.getManager(HopperManager.class);
+        this.suctionRange = Settings.SUCTION_RANGE.getDouble();
+        this.stackerHook = plugin.getManager(HookManager.class).getStackerHook();
     }
 
     @Override
     public void run() {
-        this.data.getCachedHoppers().values().stream()
-                .filter(SkyHopper::isEnabled)
-                .filter(hopper -> hopper.getLocation() != null)
-                .forEach(hopper -> {
-                    final Block block = hopper.getLocation().getBlock();
-                    if (!(block.getState() instanceof Hopper container))
-                        return;
 
-                    // Don't suction items if the container is locked.
-                    if (container.isLocked())
-                        return;
+        for (SkyHopper skyHopper : this.manager.getEnabledHoppers()) {
+            if (skyHopper == null || skyHopper.getLocation() == null) return;
 
-                    World world = hopper.getLocation().getWorld();
-                    if (world == null)
-                        return;
+            if (!(skyHopper.getLocation().getBlock().getState() instanceof org.bukkit.block.Hopper hopperBlock)) return;
 
-                    Collection<Entity> rangeItems = world.getNearbyEntities(PluginUtils.centerLocation(hopper.getLocation()), suctionRange / 2.0, suctionRange / 2.0, suctionRange / 2.0, entity -> entity instanceof Item);
+            if (hopperBlock.isLocked()) return;
 
-                    // @author Esophose
-                    rangeItems.forEach(entity -> {
-                        Item item = (Item) entity;
+            final World world = skyHopper.getLocation().getWorld();
+            final Block block = skyHopper.getLocation().getBlock();
 
-                        if (hopper.getFilterType() == FilterType.DESTROY && PluginUtils.itemFiltered(item.getItemStack(), hopper)) {
-                            item.getWorld().spawnParticle(Particle.SMOKE_NORMAL, item.getLocation(), 3, 0.0, 0.0, 0.0, 0.0);
-                            item.remove();
-                            return;
-                        }
+            @NotNull Collection<Entity> rangeItems = world.getNearbyEntities(PluginUtils.centerLocation(skyHopper.getLocation()), suctionRange / 2.0, suctionRange / 2.0, suctionRange / 2.0, entity -> entity instanceof Item);
 
-                        if (PluginUtils.itemFiltered(item.getItemStack(), hopper))
-                            return;
+            for (Entity entity : rangeItems) {
+                Item item = (Item) entity;
+                if (skyHopper.getFilterType() == FilterType.DESTROY && PluginUtils.itemFiltered(item.getItemStack(), skyHopper)) {
+                    item.getWorld().spawnParticle(Particle.SMOKE_NORMAL, item.getLocation(), 3, 0.0, 0.0, 0.0, 0.0);
+                    item.remove();
+                    return;
+                }
 
-                        int itemAmount = this.getItemAmount(item);
+                if (PluginUtils.itemFiltered(item.getItemStack(), skyHopper)) return;
 
-                        for (int i = 0; i < 5; i++) {
-                            if (itemAmount <= 0)
-                                return;
+                int itemAmount = this.getItemAmount(item);
 
-                            final ItemStack hopperItem = container.getInventory().getItem(i);
-                            if (hopperItem == null || hopperItem.getType() == Material.AIR) {
-                                // slot is empty, fill it with as many items as we can
-                                for (int x = 0; x < 5; x++)
-                                    block.getWorld().spawnParticle(Particle.REDSTONE, PluginUtils.centerLocation(block.getLocation()), 5, 0.3, 0.3, 0.3, 0.0, new Particle.DustOptions(Color.fromRGB(255, 192, 203), 1));
+                for (int i = 0; i < 5; i++) {
+                    if (itemAmount <= 0) return;
 
-                                // Create a copy of the item and set the amount to at most the max stack size of the material
-                                ItemStack copy = item.getItemStack().clone();
-                                copy.setAmount(Math.min(itemAmount, copy.getMaxStackSize()));
-                                itemAmount -= copy.getAmount();
+                    final ItemStack hopperItem = hopperBlock.getInventory().getItem(i);
+                    if (hopperItem == null || hopperItem.getType() == Material.AIR) {
+                        // slot is empty, fill it with as many items as we can
+                        for (int x = 0; x < 5; x++)
+                            block.getWorld().spawnParticle(Particle.REDSTONE, PluginUtils.centerLocation(block.getLocation()), 5, 0.3, 0.3, 0.3, 0.0, new Particle.DustOptions(Color.fromRGB(255, 192, 203), 1));
 
-                                item.getWorld().spawnParticle(Particle.SPELL_WITCH, item.getLocation(), 3, 0.0, 0.0, 0.0, 0.0);
-                                container.getInventory().setItem(i, item.getItemStack());
+                        // Create a copy of the item and set the amount to at most the max stack size of the material
+                        ItemStack copy = item.getItemStack().clone();
+                        copy.setAmount(Math.min(itemAmount, copy.getMaxStackSize()));
+                        itemAmount -= copy.getAmount();
 
-                                if (itemAmount <= 0)
-                                    item.remove();
+                        item.getWorld().spawnParticle(Particle.SPELL_WITCH, item.getLocation(), 3, 0.0, 0.0, 0.0, 0.0);
+                        hopperBlock.getInventory().setItem(i, item.getItemStack());
 
-                                continue;
+                        if (itemAmount <= 0) item.remove();
+
+                        continue;
+                    }
+
+                    if (item.getItemStack().isSimilar(hopperItem)) {
+                        // slot has the exact same itemstack in it, can we increase the stack size any more?
+                        int amount = Math.min(hopperItem.getMaxStackSize() - hopperItem.getAmount(), itemAmount);
+                        if (amount > 0) {
+                            // we sure can! add as much as we can from the chunk item to the existing hopper item
+                            hopperItem.setAmount(hopperItem.getAmount() + amount);
+                            if (itemAmount - amount <= 0) { // are we removing *all* the items?
+                                item.remove();
                             }
 
-                            if (item.getItemStack().isSimilar(hopperItem)) {
-                                // slot has the exact same itemstack in it, can we increase the stack size any more?
-                                int amount = Math.min(hopperItem.getMaxStackSize() - hopperItem.getAmount(), itemAmount);
-                                if (amount > 0) {
-                                    // we sure can! add as much as we can from the chunk item to the existing hopper item
-                                    hopperItem.setAmount(hopperItem.getAmount() + amount);
-                                    if (itemAmount - amount <= 0) { // are we removing *all* the items?
-                                        item.remove();
-                                    }
+                            itemAmount -= amount;
 
-                                    itemAmount -= amount;
+                            // ooo! pretty!
+                            item.getWorld().spawnParticle(Particle.SPELL_WITCH, item.getLocation(), 3, 0.0, 0.0, 0.0, 0.0);
 
-                                    // ooo! pretty!
-                                    item.getWorld().spawnParticle(Particle.SPELL_WITCH, item.getLocation(), 3, 0.0, 0.0, 0.0, 0.0);
-
-                                    for (int x = 0; x < 5; x++)
-                                        block.getWorld().spawnParticle(Particle.REDSTONE, PluginUtils.centerLocation(block.getLocation()), 5, 0.3, 0.3, 0.3, 0.0, new Particle.DustOptions(Color.fromRGB(255, 192, 203), 1));
-                                }
-                            }
+                            for (int x = 0; x < 5; x++)
+                                block.getWorld().spawnParticle(Particle.REDSTONE, PluginUtils.centerLocation(block.getLocation()), 5, 0.3, 0.3, 0.3, 0.0, new Particle.DustOptions(Color.fromRGB(255, 192, 203), 1));
                         }
+                    }
+                }
 
-                        this.setItemAmount(item, itemAmount);
-                    });
-                });
+                this.setItemAmount(item, itemAmount);
+            }
+        }
     }
 
     public int getItemAmount(Item item) {
-        if (stackerHook != null)
-            return stackerHook.getItemAmount(item);
+        if (stackerHook != null) return stackerHook.getItemAmount(item);
 
         return item.getItemStack().getAmount();
     }

@@ -4,7 +4,8 @@ import dev.rosewood.rosegarden.RosePlugin;
 import dev.rosewood.rosegarden.manager.Manager;
 import dev.rosewood.rosegarden.utils.NMSUtil;
 import org.bukkit.Bukkit;
-import org.bukkit.plugin.PluginManager;
+import xyz.oribuin.skyhoppers.hook.PAPI;
+import xyz.oribuin.skyhoppers.hopper.SkyHopper;
 import xyz.oribuin.skyhoppers.listener.BlockListeners;
 import xyz.oribuin.skyhoppers.listener.HopperListeners;
 import xyz.oribuin.skyhoppers.listener.PlayerListeners;
@@ -15,7 +16,7 @@ import xyz.oribuin.skyhoppers.manager.DataManager;
 import xyz.oribuin.skyhoppers.manager.HookManager;
 import xyz.oribuin.skyhoppers.manager.HopperManager;
 import xyz.oribuin.skyhoppers.manager.LocaleManager;
-import xyz.oribuin.skyhoppers.obj.SkyHopper;
+import xyz.oribuin.skyhoppers.manager.MenuManager;
 import xyz.oribuin.skyhoppers.task.HopperViewTask;
 import xyz.oribuin.skyhoppers.task.ItemTransferTask;
 import xyz.oribuin.skyhoppers.task.SuctionTask;
@@ -50,10 +51,13 @@ public class SkyHoppersPlugin extends RosePlugin {
         }
 
         // Register Listeners
-        final PluginManager pluginManager = this.getServer().getPluginManager();
+        final var pluginManager = this.getServer().getPluginManager();
         pluginManager.registerEvents(new BlockListeners(this), this);
         pluginManager.registerEvents(new PlayerListeners(this), this);
         pluginManager.registerEvents(new HopperListeners(this), this);
+
+        // Register PlaceholderAPI
+        new PAPI(this);
     }
 
 
@@ -74,7 +78,7 @@ public class SkyHoppersPlugin extends RosePlugin {
 
     @Override
     protected List<Class<? extends Manager>> getManagerLoadPriority() {
-        return List.of(HopperManager.class, HookManager.class);
+        return List.of(HopperManager.class, HookManager.class, MenuManager.class);
     }
 
     public Map<UUID, SkyHopper> getLinkingPlayers() {

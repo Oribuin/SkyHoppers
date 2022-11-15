@@ -14,16 +14,15 @@ import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
+import xyz.oribuin.skyhoppers.hopper.HopperKeys;
+import xyz.oribuin.skyhoppers.hopper.SkyHopper;
+import xyz.oribuin.skyhoppers.hopper.filter.FilterItems;
+import xyz.oribuin.skyhoppers.hopper.filter.FilterType;
 import xyz.oribuin.skyhoppers.manager.ConfigurationManager.Settings;
-import xyz.oribuin.skyhoppers.obj.FilterItems;
-import xyz.oribuin.skyhoppers.obj.FilterType;
-import xyz.oribuin.skyhoppers.obj.HopperKeys;
-import xyz.oribuin.skyhoppers.obj.SkyHopper;
-import xyz.oribuin.skyhoppers.util.ItemMaker;
+import xyz.oribuin.skyhoppers.util.ItemBuilder;
 import xyz.oribuin.skyhoppers.util.PluginUtils;
 
 import javax.annotation.Nullable;
@@ -84,6 +83,8 @@ public class HopperManager extends Manager {
     public void removeHopper(SkyHopper skyHopper) {
         this.dataManager.removeHopper(skyHopper.getLocation());
         this.hoppers.remove(skyHopper.getLocation());
+
+        skyHopper.setLocation(null);
     }
 
     /**
@@ -96,11 +97,11 @@ public class HopperManager extends Manager {
         if (skyHopper.getLocation() == null)
             return;
 
-        final Block hopperBlock = skyHopper.getLocation().getBlock();
-        org.bukkit.block.Hopper hopperState = (org.bukkit.block.Hopper) hopperBlock.getState();
+        final var hopperBlock = skyHopper.getLocation().getBlock();
+        var hopperState = (org.bukkit.block.Hopper) hopperBlock.getState();
 
         // I hate having to update every single time but I can't think of a better way to do this.
-        final PersistentDataContainer container = hopperState.getPersistentDataContainer();
+        final var container = hopperState.getPersistentDataContainer();
 
         container.set(HopperKeys.ENABLED.getKey(), PersistentDataType.INTEGER, skyHopper.isEnabled() ? 1 : 0);
         hopperState.update();
@@ -140,12 +141,12 @@ public class HopperManager extends Manager {
      * @return The new itemstack with the hopper data
      */
     public ItemStack saveHopperItem(ItemStack itemStack, SkyHopper skyHopper) {
-        final ItemMeta meta = itemStack.getItemMeta();
+        final var meta = itemStack.getItemMeta();
         if (meta == null)
             return itemStack;
 
         // I hate having to update every single time but I can't think of a better way to do this.
-        final PersistentDataContainer container = meta.getPersistentDataContainer();
+        final var container = meta.getPersistentDataContainer();
 
         container.set(HopperKeys.ENABLED.getKey(), PersistentDataType.INTEGER, skyHopper.isEnabled() ? 1 : 0);
 
@@ -222,7 +223,7 @@ public class HopperManager extends Manager {
         if (itemStack == null || itemStack.getType() != Material.HOPPER)
             return null;
 
-        final PersistentDataContainer container = itemStack.getItemMeta().getPersistentDataContainer();
+        final var container = itemStack.getItemMeta().getPersistentDataContainer();
         return this.getHopperFromContainer(container, null);
     }
 
@@ -234,12 +235,12 @@ public class HopperManager extends Manager {
      * @return The hopper object
      */
     public SkyHopper getHopperFromContainer(@NotNull PersistentDataContainer container, @Nullable Location location) {
-        Integer enabled = container.get(HopperKeys.ENABLED.getKey(), PersistentDataType.INTEGER);
+        var enabled = container.get(HopperKeys.ENABLED.getKey(), PersistentDataType.INTEGER);
         if (enabled == null)
             return null;
 
         // Create the hopper object
-        SkyHopper skyHopper = new SkyHopper(location);
+        var skyHopper = new SkyHopper(location);
 
         // Set the enabled state
         skyHopper.setEnabled(enabled == 1);
@@ -260,7 +261,7 @@ public class HopperManager extends Manager {
         if (serializedLocation == null) {
             skyHopper.setLinked(null);
         } else {
-            Block linkedBlock = this.deserializeLocation(serializedLocation).getBlock();
+            var linkedBlock = this.deserializeLocation(serializedLocation).getBlock();
             if (!(linkedBlock.getState() instanceof org.bukkit.block.Container linkedHopperState))
                 skyHopper.setLinked(null);
             else
@@ -279,9 +280,12 @@ public class HopperManager extends Manager {
      * @return The itemstack of the hopper
      */
     public ItemStack getHopperAsItem(SkyHopper skyHopper, int amount) {
-        final ItemStack itemStack = new ItemMaker(Material.HOPPER)
-                .setName(PluginUtils.format(Settings.HOPPER_ITEM_NAME.getString(), this.get(skyHopper)))
-                .setLore(PluginUtils.format(Settings.HOPPER_ITEM_LORE.getStringList(), this.get(skyHopper)))
+
+        var placeholders = this.getPlaceholders(skyHopper);
+
+        final var itemStack = new ItemBuilder(Material.HOPPER)
+                .setName(PluginUtils.format(null, Settings.HOPPER_ITEM_NAME.getString(), placeholders))
+                .setLore(PluginUtils.format(null, Settings.HOPPER_ITEM_LORE.getStringList(), placeholders))
                 .glow(Settings.HOPPER_ITEM_GLOW.getBoolean())
                 .setAmount(amount)
                 .create();
@@ -296,7 +300,7 @@ public class HopperManager extends Manager {
      */
     public List<SkyHopper> getLinkedHoppers() {
         List<SkyHopper> linkedHoppers = new ArrayList<>();
-        for (SkyHopper skyHopper : this.hoppers.values()) {
+        for (var skyHopper : this.hoppers.values()) {
             if (skyHopper.getLinked() != null)
                 linkedHoppers.add(skyHopper);
         }
@@ -311,7 +315,7 @@ public class HopperManager extends Manager {
      * @return The hopper object
      */
     public SkyHopper getHopperFromContainer(Container container) {
-        for (SkyHopper skyHopper : this.getLinkedHoppers()) {
+        for (var skyHopper : this.getLinkedHoppers()) {
             Container linked = skyHopper.getLinked(); // it should never be null but intelli doesn't know that
             if (linked != null && linked.getLocation().equals(container.getLocation()))
                 return skyHopper;
@@ -327,7 +331,7 @@ public class HopperManager extends Manager {
      * @param skyHopper The hopper object
      * @return The placeholders
      */
-    public StringPlaceholders get(SkyHopper skyHopper) {
+    public StringPlaceholders getPlaceholders(SkyHopper skyHopper) {
         return StringPlaceholders.builder()
                 .addPlaceholder("enabled", skyHopper.isEnabled() ? "Enabled" : "Disabled")
                 .addPlaceholder("filter_type", PluginUtils.formatEnum(skyHopper.getFilterType().name()))
@@ -453,7 +457,7 @@ public class HopperManager extends Manager {
         if (location == null)
             return null;
 
-        final YamlConfiguration config = new YamlConfiguration();
+        final var config = new YamlConfiguration();
         config.set("location", location);
         return Base64.getEncoder().encodeToString(config.saveToString().getBytes());
     }
@@ -468,14 +472,14 @@ public class HopperManager extends Manager {
         if (serialized == null)
             return null;
 
-        final YamlConfiguration config = new YamlConfiguration();
+        final var config = new YamlConfiguration();
         try {
             config.loadFromString(new String(Base64.getDecoder().decode(serialized)));
         } catch (InvalidConfigurationException e) {
             e.printStackTrace();
         }
 
-        Location loc = config.getLocation("location");
+        var loc = config.getLocation("location");
         if (loc == null || loc.getWorld() == null)
             return null;
 

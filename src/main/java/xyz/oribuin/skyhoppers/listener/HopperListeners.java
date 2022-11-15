@@ -6,10 +6,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryMoveItemEvent;
 import org.bukkit.event.inventory.InventoryPickupItemEvent;
-import org.bukkit.inventory.ItemStack;
 import xyz.oribuin.skyhoppers.SkyHoppersPlugin;
 import xyz.oribuin.skyhoppers.manager.HopperManager;
-import xyz.oribuin.skyhoppers.obj.SkyHopper;
 import xyz.oribuin.skyhoppers.util.PluginUtils;
 
 public class HopperListeners implements Listener {
@@ -26,7 +24,7 @@ public class HopperListeners implements Listener {
         if (!(event.getInventory().getHolder() instanceof org.bukkit.block.Hopper block))
             return;
 
-        SkyHopper hopper = this.hopperManager.getHopper(block);
+        var hopper = this.hopperManager.getHopper(block);
         if (hopper == null)
             return;
 
@@ -35,8 +33,7 @@ public class HopperListeners implements Listener {
             return;
         }
 
-
-        final ItemStack item = event.getItem().getItemStack();
+        final var item = event.getItem().getItemStack();
         if (PluginUtils.itemFiltered(item, hopper)) {
             event.setCancelled(true);
         }
@@ -47,11 +44,11 @@ public class HopperListeners implements Listener {
         if (!(event.getDestination().getHolder() instanceof org.bukkit.block.Hopper destination))
             return;
 
-        final SkyHopper hopper = this.hopperManager.getHopper(destination);
+        final var hopper = this.hopperManager.getHopper(destination);
         if (hopper == null)
             return;
 
-        final ItemStack item = event.getItem();
+        final var item = event.getItem();
         if (PluginUtils.itemFiltered(item, hopper)) {
             event.setCancelled(true);
         }
@@ -62,11 +59,11 @@ public class HopperListeners implements Listener {
         if (!(event.getInventory().getHolder() instanceof org.bukkit.block.Hopper block))
             return;
 
-        final SkyHopper hopper = this.hopperManager.getHopper(block);
+        final var hopper = this.hopperManager.getHopper(block);
         if (hopper == null)
             return;
 
-        final ItemStack item = event.getCurrentItem();
+        final var item = event.getCurrentItem();
         if (item == null)
             return;
 

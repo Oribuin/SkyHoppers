@@ -1,14 +1,13 @@
 package xyz.oribuin.skyhoppers.hook.stacker;
 
 import dev.rosewood.rosestacker.api.RoseStackerAPI;
-import dev.rosewood.rosestacker.stack.StackedItem;
 import org.bukkit.entity.Item;
 
 public class RoseStackerHook implements StackerHook {
 
     @Override
     public int getItemAmount(Item item) {
-        StackedItem stackedItem = RoseStackerAPI.getInstance().getStackedItem(item);
+        var stackedItem = RoseStackerAPI.getInstance().getStackedItem(item);
         if (stackedItem != null)
             return stackedItem.getStackSize();
 
@@ -17,7 +16,7 @@ public class RoseStackerHook implements StackerHook {
 
     @Override
     public void setItemAmount(Item item, int amount) {
-        StackedItem stackedItem = RoseStackerAPI.getInstance().getStackedItem(item);
+        var stackedItem = RoseStackerAPI.getInstance().getStackedItem(item);
         if (stackedItem != null) {
             stackedItem.setStackSize(amount);
             return;

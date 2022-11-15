@@ -23,23 +23,38 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
-@SuppressWarnings("deprecation")
-public class ItemMaker {
+@SuppressWarnings("deprecated")
+public class ItemBuilder {
 
     private final ItemStack item;
 
-    public ItemMaker(Material material) {
+    public ItemBuilder(Material material) {
+        if (material == null)
+            throw new IllegalArgumentException("Material cannot be null in ItemBuilder");
+
         this.item = new ItemStack(material);
     }
 
-    public ItemMaker(ItemStack item) {
+    public ItemBuilder(ItemStack item) {
+
+        if (item == null) {
+            throw new IllegalArgumentException("Item cannot be null in ItemBuilder");
+        }
         this.item = item.clone();
     }
 
     public static ItemStack filler(Material material) {
-        return new ItemMaker(material)
-                .setName(" ")
-                .create();
+        return new ItemBuilder(material).setName(" ").create();
+    }
+
+    public ItemBuilder setMaterial(Material material) {
+
+        if (material == null) {
+            return this;
+        }
+
+        this.item.setType(material);
+        return this;
     }
 
     /**
@@ -48,7 +63,7 @@ public class ItemMaker {
      * @param text The text.
      * @return ItemBuilder.
      */
-    public ItemMaker setName(String text) {
+    public ItemBuilder setName(String text) {
         final ItemMeta meta = this.item.getItemMeta();
         if (meta == null || text == null)
             return this;
@@ -65,7 +80,7 @@ public class ItemMaker {
      * @param lore The lore
      * @return ItemBuilder.
      */
-    public ItemMaker setLore(List<String> lore) {
+    public ItemBuilder setLore(List<String> lore) {
         final ItemMeta meta = this.item.getItemMeta();
         if (meta == null || lore == null)
             return this;
@@ -82,7 +97,7 @@ public class ItemMaker {
      * @param lore The lore
      * @return ItemBuilder.
      */
-    public ItemMaker setLore(String... lore) {
+    public ItemBuilder setLore(String... lore) {
         final ItemMeta meta = this.item.getItemMeta();
         if (meta == null || lore == null)
             return this;
@@ -99,7 +114,7 @@ public class ItemMaker {
      * @param amount The amount of items.
      * @return ItemBuilder
      */
-    public ItemMaker setAmount(int amount) {
+    public ItemBuilder setAmount(int amount) {
         item.setAmount(amount);
         return this;
     }
@@ -111,7 +126,7 @@ public class ItemMaker {
      * @param level The level of the enchantment
      * @return ItemBuilder
      */
-    public ItemMaker addEnchant(Enchantment ench, int level) {
+    public ItemBuilder addEnchant(Enchantment ench, int level) {
         final ItemMeta meta = this.item.getItemMeta();
         if (meta == null)
             return this;
@@ -128,7 +143,7 @@ public class ItemMaker {
      * @param ench The enchantment.
      * @return ItemBuilder
      */
-    public ItemMaker removeEnchant(Enchantment ench) {
+    public ItemBuilder removeEnchant(Enchantment ench) {
         item.removeEnchantment(ench);
         return this;
     }
@@ -139,7 +154,7 @@ public class ItemMaker {
      * @param flags The ItemFlags.
      * @return ItemBuilder
      */
-    public ItemMaker setFlags(ItemFlag[] flags) {
+    public ItemBuilder setFlags(ItemFlag[] flags) {
         final ItemMeta meta = this.item.getItemMeta();
         if (meta == null)
             return this;
@@ -158,7 +173,7 @@ public class ItemMaker {
      * @param unbreakable true if unbreakable
      * @return ItemBuilder
      */
-    public ItemMaker setUnbreakable(boolean unbreakable) {
+    public ItemBuilder setUnbreakable(boolean unbreakable) {
         final ItemMeta meta = this.item.getItemMeta();
         if (meta == null)
             return this;
@@ -172,7 +187,7 @@ public class ItemMaker {
      *
      * @return ItemBuilder
      */
-    public ItemMaker glow(boolean b) {
+    public ItemBuilder glow(boolean b) {
         if (!b)
             return this;
 
@@ -194,7 +209,7 @@ public class ItemMaker {
      * @param value The value of the nbt
      * @return ItemBuilder
      */
-    public ItemMaker setNBT(Plugin plugin, String key, String value) {
+    public ItemBuilder setNBT(Plugin plugin, String key, String value) {
         final ItemMeta meta = item.getItemMeta();
         if (meta == null)
             return this;
@@ -212,7 +227,7 @@ public class ItemMaker {
      * @param value The value of the nbt
      * @return ItemBuilder
      */
-    public ItemMaker setNBT(Plugin plugin, String key, int value) {
+    public ItemBuilder setNBT(Plugin plugin, String key, int value) {
         final ItemMeta meta = item.getItemMeta();
         if (meta == null)
             return this;
@@ -230,7 +245,7 @@ public class ItemMaker {
      * @param value The value of the nbt
      * @return ItemBuilder
      */
-    public ItemMaker setNBT(Plugin plugin, String key, double value) {
+    public ItemBuilder setNBT(Plugin plugin, String key, double value) {
         final ItemMeta meta = item.getItemMeta();
         if (meta == null)
             return this;
@@ -241,7 +256,7 @@ public class ItemMaker {
         return this;
     }
 
-    public ItemMaker setTexture(String texture) {
+    public ItemBuilder setTexture(String texture) {
         if (item.getType() != Material.PLAYER_HEAD)
             return this;
 
@@ -268,7 +283,7 @@ public class ItemMaker {
         return this;
     }
 
-    public ItemMaker setOwner(OfflinePlayer owner) {
+    public ItemBuilder setOwner(OfflinePlayer owner) {
         if (item.getType() != Material.PLAYER_HEAD)
             return this;
 
@@ -284,7 +299,7 @@ public class ItemMaker {
         return this;
     }
 
-    public ItemMaker setModel(int model) {
+    public ItemBuilder setModel(int model) {
         ItemMeta meta = this.item.getItemMeta();
         if (meta == null)
             return this;
@@ -294,7 +309,7 @@ public class ItemMaker {
         return this;
     }
 
-    public ItemMaker addPotionEffect(PotionEffectType effectType, int duration, int amp) {
+    public ItemBuilder addPotionEffect(PotionEffectType effectType, int duration, int amp) {
         if (!(this.item.getItemMeta() instanceof PotionMeta meta))
             return this;
 
@@ -303,7 +318,7 @@ public class ItemMaker {
         return this;
     }
 
-    public ItemMaker setPotionColor(Color color) {
+    public ItemBuilder setPotionColor(Color color) {
         if (!(this.item.getItemMeta() instanceof PotionMeta meta))
             return this;
 

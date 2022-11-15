@@ -1,7 +1,5 @@
 package xyz.oribuin.skyhoppers.listener;
 
-import org.bukkit.block.Block;
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -12,7 +10,7 @@ import xyz.oribuin.skyhoppers.gui.HopperGUI;
 import xyz.oribuin.skyhoppers.manager.HookManager;
 import xyz.oribuin.skyhoppers.manager.HopperManager;
 import xyz.oribuin.skyhoppers.manager.LocaleManager;
-import xyz.oribuin.skyhoppers.obj.SkyHopper;
+import xyz.oribuin.skyhoppers.manager.MenuManager;
 
 public class PlayerListeners implements Listener {
 
@@ -31,19 +29,19 @@ public class PlayerListeners implements Listener {
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onHopperMenuOpen(PlayerInteractEvent event) {
 
-        final Player player = event.getPlayer();
+        final var player = event.getPlayer();
 
         if (!event.hasBlock() || event.getAction() != Action.LEFT_CLICK_BLOCK)
             return;
 
-        final Block block = event.getClickedBlock();
+        final var block = event.getClickedBlock();
         if (block == null)
             return;
 
         if (!(block.getState() instanceof org.bukkit.block.Hopper hopperBlock))
             return;
 
-        final SkyHopper hopper = this.manager.getHopper(hopperBlock);
+        final var hopper = this.manager.getHopper(hopperBlock);
         if (hopper == null || player.isSneaking())
             return;
 
@@ -58,7 +56,14 @@ public class PlayerListeners implements Listener {
             return;
         }
 
-        new HopperGUI(this.plugin).openGUI(player, hopper);
+        if (!player.hasPermission("skyhoppers.admin") && !hopper.getOwner().equals(player.getUniqueId())) {
+            this.locale.sendMessage(player, "hopper-not-owner");
+            return;
+        }
+
+        this.plugin.getManager(MenuManager.class)
+                .getGUI(HopperGUI.class)
+                .openGUI(player, hopper);
     }
 
 }

@@ -62,6 +62,7 @@ dependencies {
     compileOnly 'com.github.Angeschossen:LandsAPI:6.22.0'
     compileOnly 'com.palmergames.bukkit.towny:towny:0.98.2.0'
     compileOnly 'com.sk89q.worldguard:worldguard-bukkit:7.0.7'
+    compileOnly 'me.clip:placeholderapi:2.11.2'
 
     // Frameworks & MySQL APIs
     implementation 'dev.rosewood:rosegarden:1.1.0.48-SNAPSHOT'

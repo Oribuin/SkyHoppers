@@ -1,4 +1,4 @@
-package xyz.oribuin.skyhoppers.obj;
+package xyz.oribuin.skyhoppers.hopper;
 
 import org.bukkit.NamespacedKey;
 

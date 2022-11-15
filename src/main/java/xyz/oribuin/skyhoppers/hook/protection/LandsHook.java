@@ -2,7 +2,6 @@ package xyz.oribuin.skyhoppers.hook.protection;
 
 import me.angeschossen.lands.api.flags.Flags;
 import me.angeschossen.lands.api.integration.LandsIntegration;
-import me.angeschossen.lands.api.land.Area;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import xyz.oribuin.skyhoppers.SkyHoppersPlugin;
@@ -14,7 +13,7 @@ public class LandsHook implements ProtectionHook {
     final
     @Override
     public boolean canBuild(Player player, Location location) {
-        Area area = integration.getArea(location.getWorld(), location.getBlockX(), location.getBlockY(), location.getBlockZ());
+        var area = integration.getArea(location.getWorld(), location.getBlockX(), location.getBlockY(), location.getBlockZ());
 
         if (area == null)
             return true;
@@ -24,7 +23,7 @@ public class LandsHook implements ProtectionHook {
 
     @Override
     public boolean canOpen(Player player, Location location) {
-        Area area = integration.getArea(location.getWorld(), location.getBlockX(), location.getBlockY(), location.getBlockZ());
+        var area = integration.getArea(location.getWorld(), location.getBlockX(), location.getBlockY(), location.getBlockZ());
 
         if (area == null)
             return true;

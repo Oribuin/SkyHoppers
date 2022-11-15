@@ -1,10 +1,11 @@
-package xyz.oribuin.skyhoppers.obj;
+package xyz.oribuin.skyhoppers.hopper;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Tag;
 import org.bukkit.block.Container;
 import org.jetbrains.annotations.NotNull;
+import xyz.oribuin.skyhoppers.hopper.filter.FilterType;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -45,7 +46,7 @@ public class SkyHopper {
     }
 
     public static List<Material> validContainers() {
-        List<Material> materials = new ArrayList<>(Arrays.asList(
+        var materials = new ArrayList<>(Arrays.asList(
                 Material.BARREL,
                 Material.BLAST_FURNACE,
                 Material.CHEST,

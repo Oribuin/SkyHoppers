@@ -15,7 +15,7 @@ public class _1_CreateInitialTables extends DataMigration {
     @Override
     public void migrate(DatabaseConnector connector, Connection connection, String tablePrefix) throws SQLException {
 
-        final String query = "CREATE TABLE IF NOT EXISTS " + tablePrefix + "hoppers (x INT, y INT, z INT, world VARCHAR(50))";
+        final var query = "CREATE TABLE IF NOT EXISTS " + tablePrefix + "hoppers (x INT, y INT, z INT, world VARCHAR(50))";
         try (var statement = connection.prepareStatement(query)) {
             statement.executeUpdate();
         }

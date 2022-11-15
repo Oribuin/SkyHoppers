@@ -8,10 +8,8 @@ import dev.rosewood.rosegarden.command.framework.annotation.RoseExecutable;
 import org.bukkit.Material;
 import org.bukkit.block.Hopper;
 import org.bukkit.entity.Player;
-import xyz.oribuin.skyhoppers.SkyHoppersPlugin;
 import xyz.oribuin.skyhoppers.manager.HopperManager;
 import xyz.oribuin.skyhoppers.manager.LocaleManager;
-import xyz.oribuin.skyhoppers.obj.SkyHopper;
 
 public class ViewCommand extends RoseCommand {
 
@@ -42,7 +40,7 @@ public class ViewCommand extends RoseCommand {
         }
 
         // Enable the visualizer if the player is looking at a skyhopper.
-        SkyHopper hopper = manager.getHopper(block);
+        var hopper = manager.getHopper(block);
         if (hopper == null) {
             locale.sendMessage(player, "command-view-not-skyhopper");
             return;

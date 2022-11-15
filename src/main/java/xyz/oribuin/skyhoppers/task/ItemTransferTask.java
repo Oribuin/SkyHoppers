@@ -6,10 +6,10 @@ import org.bukkit.block.Furnace;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
+import xyz.oribuin.skyhoppers.hopper.SkyHopper;
 import xyz.oribuin.skyhoppers.manager.ConfigurationManager.Settings;
 import xyz.oribuin.skyhoppers.manager.HopperManager;
-import xyz.oribuin.skyhoppers.obj.SkyHopper;
-import xyz.oribuin.skyhoppers.util.ItemMaker;
+import xyz.oribuin.skyhoppers.util.ItemBuilder;
 
 import java.util.Arrays;
 import java.util.List;
@@ -64,18 +64,18 @@ public class ItemTransferTask extends BukkitRunnable {
             if (itemAmount <= 0)
                 return;
 
-            final ItemStack containerItem = inv.getItem(i);
+            var containerItem = inv.getItem(i);
 
             if (inv.getHolder() instanceof Furnace) {
                 if (toTransfer.getType().isFuel() && i == 0 || !toTransfer.getType().isFuel() && i == 1)
                     continue;
             }
 
-            int transferAmount = Math.min(itemAmount, itemsPerTransfer);
+            var transferAmount = Math.min(itemAmount, itemsPerTransfer);
 
             // slot is empty, fill it with the whole itemstack
             if (containerItem == null || containerItem.getType() == Material.AIR) {
-                inv.setItem(i, new ItemMaker(toTransfer.clone()).setAmount(transferAmount).create());
+                inv.setItem(i, new ItemBuilder(toTransfer.clone()).setAmount(transferAmount).create());
                 toTransfer.setAmount(toTransfer.getAmount() - transferAmount);
 
                 return;

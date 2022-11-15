@@ -1,8 +1,6 @@
 package xyz.oribuin.skyhoppers.listener;
 
-import org.bukkit.block.Block;
 import org.bukkit.block.Container;
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -10,17 +8,15 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.inventory.ItemStack;
 import xyz.oribuin.skyhoppers.SkyHoppersPlugin;
+import xyz.oribuin.skyhoppers.hopper.SkyHopper;
 import xyz.oribuin.skyhoppers.manager.HookManager;
 import xyz.oribuin.skyhoppers.manager.HopperManager;
 import xyz.oribuin.skyhoppers.manager.LocaleManager;
-import xyz.oribuin.skyhoppers.obj.SkyHopper;
 
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
 
 import static xyz.oribuin.skyhoppers.util.PluginUtils.getBlockLoc;
@@ -45,14 +41,14 @@ public class BlockListeners implements Listener {
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onHopperPlace(BlockPlaceEvent event) {
 
-        final Player player = event.getPlayer();
+        final var player = event.getPlayer();
 
         if (!(event.getBlock().getState() instanceof org.bukkit.block.Hopper hopper)) {
             return;
         }
 
-        final ItemStack itemInHand = event.getItemInHand();
-        final SkyHopper handHopper = this.manager.getHopper(itemInHand);
+        final var itemInHand = event.getItemInHand();
+        final var handHopper = this.manager.getHopper(itemInHand);
         if (handHopper == null)
             return;
 
@@ -75,12 +71,12 @@ public class BlockListeners implements Listener {
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onHopperBreak(BlockBreakEvent event) {
 
-        final Player player = event.getPlayer();
+        final var player = event.getPlayer();
         if (!(event.getBlock().getState() instanceof org.bukkit.block.Hopper hopper)) {
             return;
         }
 
-        final SkyHopper skyHopper = this.manager.getHopper(hopper);
+        final var skyHopper = this.manager.getHopper(hopper);
         if (skyHopper == null)
             return;
 
@@ -89,6 +85,15 @@ public class BlockListeners implements Listener {
             event.setCancelled(true);
             return;
         }
+
+        if (!player.hasPermission("skyhoppers.admin")
+                && skyHopper.getOwner() != null
+                && !skyHopper.getOwner().equals(player.getUniqueId())) {
+            this.locale.sendMessage(player, "hopper-not-owner");
+            event.setCancelled(true);
+            return;
+        }
+
 
         // Remove the hopper from the visualizer.
         Map<UUID, SkyHopper> hopperViewers = this.manager.getHopperViewers();
@@ -106,7 +111,7 @@ public class BlockListeners implements Listener {
 
         event.setDropItems(false);
 
-        final ItemStack item = this.manager.getHopperAsItem(skyHopper, 1).clone();
+        final var item = this.manager.getHopperAsItem(skyHopper, 1).clone();
         if (!plugin.getConfig().getBoolean("insta-pickup") || event.getPlayer().getInventory().firstEmpty() == -1) {
             event.getBlock().getWorld().dropItem(event.getBlock().getLocation(), item);
             return;
@@ -118,15 +123,23 @@ public class BlockListeners implements Listener {
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onLinkedBreak(BlockBreakEvent event) {
 
-        final Player player = event.getPlayer();
+        final var player = event.getPlayer();
         if (!(event.getBlock().getState() instanceof Container container))
             return;
 
-        SkyHopper skyHopper = this.manager.getHopperFromContainer(container);
+        var skyHopper = this.manager.getHopperFromContainer(container);
         if (skyHopper == null)
             return;
 
         event.setCancelled(true);
+
+        if (!player.hasPermission("skyhoppers.admin")
+                && skyHopper.getOwner() != null
+                && !skyHopper.getOwner().equals(player.getUniqueId())) {
+            this.locale.sendMessage(player, "hopper-not-owner");
+            return;
+        }
+
 
         if (!hookManager.canBuild(player, container.getLocation())) {
             this.locale.sendMessage(player, "hopper-cannot-build");
@@ -140,8 +153,8 @@ public class BlockListeners implements Listener {
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onHopperLink(PlayerInteractEvent event) {
-        final Player player = event.getPlayer();
-        final Block block = event.getClickedBlock();
+        final var player = event.getPlayer();
+        final var block = event.getClickedBlock();
 
         if (!event.hasBlock() || event.getAction() != Action.LEFT_CLICK_BLOCK || block == null)
             return;
@@ -164,9 +177,16 @@ public class BlockListeners implements Listener {
             return;
         }
 
-        final SkyHopper skyHopper = this.plugin.getLinkingPlayers().get(player.getUniqueId());
+        final var skyHopper = this.plugin.getLinkingPlayers().get(player.getUniqueId());
         if (skyHopper == null)
             return;
+
+        if (!player.hasPermission("skyhoppers.admin")
+                && skyHopper.getOwner() != null
+                && !skyHopper.getOwner().equals(player.getUniqueId())) {
+            this.locale.sendMessage(player, "hopper-not-owner");
+            return;
+        }
 
         this.plugin.getLinkingPlayers().remove(player.getUniqueId());
 

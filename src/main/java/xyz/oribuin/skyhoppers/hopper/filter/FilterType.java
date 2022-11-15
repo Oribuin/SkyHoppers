@@ -1,4 +1,4 @@
-package xyz.oribuin.skyhoppers.obj;
+package xyz.oribuin.skyhoppers.hopper.filter;
 
 public enum FilterType {
     WHITELIST("Only specific items are allowed in."),

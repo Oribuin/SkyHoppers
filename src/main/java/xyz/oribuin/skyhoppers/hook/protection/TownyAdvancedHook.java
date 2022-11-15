@@ -2,7 +2,6 @@ package xyz.oribuin.skyhoppers.hook.protection;
 
 import com.palmergames.bukkit.towny.TownyAPI;
 import com.palmergames.bukkit.towny.exceptions.NotRegisteredException;
-import com.palmergames.bukkit.towny.object.TownBlock;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
@@ -16,7 +15,7 @@ public class TownyAdvancedHook implements ProtectionHook {
         if (TownyAPI.getInstance().isWilderness(location))
             return true;
 
-        TownBlock townBlock = api.getTownBlock(location);
+        var townBlock = api.getTownBlock(location);
 
         try {
             return townBlock != null && townBlock.getTown().hasResident(player.getUniqueId());
@@ -30,7 +29,7 @@ public class TownyAdvancedHook implements ProtectionHook {
         if (TownyAPI.getInstance().isWilderness(location))
             return true;
 
-        TownBlock townBlock = api.getTownBlock(location);
+        var townBlock = api.getTownBlock(location);
         try {
             return townBlock != null && townBlock.getTown().hasResident(player.getUniqueId());
         } catch (NotRegisteredException e) {

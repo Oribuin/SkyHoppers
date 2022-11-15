@@ -79,7 +79,7 @@ public class HookManager extends Manager {
      * @return true if the player can build
      */
     public boolean canBuild(Player player, Location location) {
-        for (ProtectionHook hook : this.protectionHooks) {
+        for (var hook : this.protectionHooks) {
             if (!hook.canBuild(player, location))
                 return false;
         }
@@ -95,7 +95,7 @@ public class HookManager extends Manager {
      * @return true if the player can access the container
      */
     public boolean canOpen(Player player, Location location) {
-        for (ProtectionHook hook : this.protectionHooks) {
+        for (var hook : this.protectionHooks) {
             if (!hook.canOpen(player, location))
                 return false;
         }

@@ -1,6 +1,7 @@
 package xyz.oribuin.skyhoppers.gui;
 
-import dev.triumphteam.gui.builder.item.ItemBuilder;
+import dev.rosewood.rosegarden.RosePlugin;
+import dev.rosewood.rosegarden.utils.StringPlaceholders;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import dev.triumphteam.gui.guis.PaginatedGui;
@@ -10,54 +11,42 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
-import xyz.oribuin.skyhoppers.SkyHoppersPlugin;
+import xyz.oribuin.skyhoppers.hopper.SkyHopper;
+import xyz.oribuin.skyhoppers.hopper.filter.FilterOption;
+import xyz.oribuin.skyhoppers.hopper.filter.FilterType;
 import xyz.oribuin.skyhoppers.manager.HopperManager;
-import xyz.oribuin.skyhoppers.manager.LocaleManager;
-import xyz.oribuin.skyhoppers.obj.FilterType;
-import xyz.oribuin.skyhoppers.obj.SkyHopper;
-import xyz.oribuin.skyhoppers.util.ItemMaker;
+import xyz.oribuin.skyhoppers.manager.MenuManager;
 import xyz.oribuin.skyhoppers.util.PluginUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.ListIterator;
+import java.util.Map;
+import java.util.UUID;
 
-public class FilterGUI {
+public class FilterGUI extends PluginMenu {
 
-    private final SkyHoppersPlugin plugin;
     private final HopperManager manager;
-    private final LocaleManager locale;
-    private final SkyHopper skyHopper;
+    private final Map<UUID, FilterOption> optionMap = new HashMap<>();
 
-    private final List<FilterType> filters;
-    private ListIterator<FilterType> iterator;
-    private FilterType current;
+    public FilterGUI(final RosePlugin rosePlugin) {
+        super(rosePlugin);
 
-    public FilterGUI(final SkyHoppersPlugin plugin, SkyHopper skyHopper) {
-        this.plugin = plugin;
-        this.manager = this.plugin.getManager(HopperManager.class);
-        this.locale = this.plugin.getManager(LocaleManager.class);
-        this.skyHopper = skyHopper;
-
-        this.filters = new ArrayList<>(Arrays.asList(FilterType.values()));
-        filters.removeIf(filterType -> filterType == skyHopper.getFilterType());
-        filters.add(0, skyHopper.getFilterType());
-
-        this.iterator = new ArrayList<>(filters).listIterator();
-        this.current = iterator.next();
+        this.manager = rosePlugin.getManager(HopperManager.class);
     }
 
-    public void openGUI(Player player) {
-        PaginatedGui gui = Gui.paginated()
-                .title(this.text("Hopper Filters"))
+    public void openGUI(Player player, SkyHopper hopper) {
+        var gui = Gui.paginated()
+                .title(this.text(this.config.getString("gui-settings.title")))
+                .rows(this.config.getInt("gui-settings.rows"))
                 .disableAllInteractions()
-                .rows(5)
                 .create();
 
-        gui.setCloseGuiAction(event -> this.manager.saveHopperBlock(skyHopper));
+        gui.setCloseGuiAction(event -> this.manager.saveHopperBlock(hopper));
         gui.setPlayerInventoryAction(event -> {
-            List<Material> materials = new ArrayList<>(this.skyHopper.getFilterItems());
+            var materials = new ArrayList<>(hopper.getFilterItems());
 
             if (event.getCurrentItem() == null || event.getCurrentItem().getType() == Material.AIR) {
                 return;
@@ -68,88 +57,171 @@ public class FilterGUI {
             event.setResult(Event.Result.DENY);
             ((Player) event.getWhoClicked()).updateInventory();
 
+            if (!materials.contains(event.getCurrentItem().getType())) {
+                materials.add(event.getCurrentItem().getType());
+            } else {
+                materials.remove(event.getCurrentItem().getType());
+            }
 
-            materials.add(event.getCurrentItem().getType());
-            this.skyHopper.setFilterItems(materials);
-            this.addFilterItems(gui);
+            hopper.setFilterItems(materials);
+            this.addFilterItems(gui, hopper);
         });
 
-        gui.setItem(List.of(0, 8, 36, 44), new GuiItem(ItemMaker.filler(Material.CYAN_STAINED_GLASS_PANE)));
-        gui.setItem(List.of(1, 2, 6, 7, 9, 17, 27, 35, 37, 38, 42, 43), new GuiItem(ItemMaker.filler(Material.LIGHT_BLUE_STAINED_GLASS_PANE)));
-        gui.setItem(List.of(3, 5, 18, 26, 39, 41), new GuiItem(ItemMaker.filler(Material.BLUE_STAINED_GLASS_PANE)));
-        gui.setItem(40,
-                ItemBuilder.from(Material.BARRIER)
-                        .name(this.text("<#FF4F58><bold>Go Back!"))
-                        .lore(this.text(" <white>| <gray>Click to go back to the"), this.text(" <white>| <gray>main hopper menu."))
-                        .asGuiItem(e -> new HopperGUI(this.plugin).openGUI(player, this.skyHopper))
-        );
+        final var extraItems = this.config.getConfigurationSection("extra-items");
+        if (extraItems != null) {
+            for (var key : extraItems.getKeys(false)) {
+                MenuItem.create(this.config)
+                        .path("extra-items." + key)
+                        .player(player)
+                        .place(gui);
+            }
+        }
 
-        this.setFilterItem(gui);
-        this.addFilterItems(gui);
+        MenuItem.create(this.config)
+                .path("go-back")
+                .player(player)
+                .action(event -> this.rosePlugin.getManager(MenuManager.class).getGUI(HopperGUI.class).openGUI(player, hopper))
+                .place(gui);
 
+        MenuItem.create(this.config)
+                .path("next-page")
+                .player(player)
+                .action(event -> gui.next())
+                .conditional(gui.getNextPageNum() > gui.getCurrentPageNum())
+                .place(gui);
+
+        MenuItem.create(this.config)
+                .path("previous-page")
+                .player(player)
+                .action(event -> gui.previous())
+                .conditional(gui.getPrevPageNum() < gui.getCurrentPageNum())
+                .place(gui);
+
+        this.setFilterItem(gui, player, hopper);
+        this.addFilterItems(gui, hopper);
         gui.open(player);
 
     }
 
-    public void addFilterItems(PaginatedGui gui) {
-        List<Material> materials = new ArrayList<>(this.skyHopper.getFilterItems());
+    public void addFilterItems(PaginatedGui gui, SkyHopper hopper) {
+        var materials = new ArrayList<>(hopper.getFilterItems());
 
         gui.clearPageItems();
-        materials.forEach(material -> gui.addItem(
-                ItemBuilder.from(material)
-                        .name(this.text("<#FF4F58><bold>" + material.name()))
-                        .lore(this.text(" <white>| <gray>Click to remove this item from the filter."))
-                        .asGuiItem(e -> {
-                            this.skyHopper.getFilterItems().remove(material);
-                            this.manager.saveHopperBlock(this.skyHopper);
-                            this.openGUI((Player) e.getWhoClicked());
-                        })
-        ));
+        materials.forEach(material -> gui.addItem(new GuiItem(material, e -> {
+            hopper.getFilterItems().remove(material);
+            this.manager.saveHopperBlock(hopper);
+            this.openGUI((Player) e.getWhoClicked(), hopper);
+        })));
 
         gui.update();
     }
 
-    public void setFilterItem(PaginatedGui gui) {
-        gui.setItem(4, ItemBuilder.from(Material.HOPPER)
-                .name(this.text("<#99ff99><bold>Change Item Filter Type"))
-                .lore(
-                        this.text(" <white>| <gray>Click to switch the filter type."),
-                        this.text(" <white>| <gray>Current: <white>" + PluginUtils.formatEnum(this.skyHopper.getFilterType().name())),
-                        this.text(" <white>| <gray>Next: <white>" + PluginUtils.formatEnum(this.getNextFilter().name())),
-                        this.text(" <white>|"),
-                        this.text(" <white>| <gray>" + this.skyHopper.getFilterType().getDesc())
-                )
-                .glow(true)
-                .asGuiItem(event -> {
-                    if (!iterator.hasNext()) {
-                        iterator = new ArrayList<>(this.filters).listIterator();
-                    }
+    public void setFilterItem(PaginatedGui gui, Player player, SkyHopper hopper) {
 
-                    current = iterator.next();
-                    this.skyHopper.setFilterType(current);
-                    this.setFilterItem(gui);
-                }));
+        var option = this.optionMap.getOrDefault(player.getUniqueId(), new FilterOption(hopper.getFilterType()));
 
-        gui.update();
-    }
-
-    public FilterType getNextFilter() {
-        // Get the next filter type from the list from the current filter type.
-        int index = this.filters.indexOf(this.skyHopper.getFilterType()) + 1;
-
-        // If the index is greater than the size of the list, reset the index to 0.
-        if (index >= this.filters.size()) {
-            index = 0;
+        if (!option.getIterator().hasNext()) {
+            option.setIterator(Arrays.asList(FilterType.values()).iterator());
         }
 
-        // Return the next filter type.
-        return this.filters.get(index);
+        var next = option.getIterator().next();
+
+        final var placeholders = StringPlaceholders.builder()
+                .addPlaceholder("current", PluginUtils.formatEnum(option.getFilterType().name()))
+                .addPlaceholder("next", PluginUtils.formatEnum(next.name()))
+                .addPlaceholder("description", hopper.getFilterType().getDesc())
+                .build();
+
+        MenuItem.create(this.config)
+                .path("change-filter")
+                .placeholders(placeholders)
+                .player(player)
+                .action(event -> {
+                    option.setFilterType(next);
+                    this.optionMap.put(player.getUniqueId(), option);
+                    hopper.setFilterType(next);
+                    this.setFilterItem(gui, player, hopper);
+                })
+                .place(gui);
     }
 
     private Component text(String text) {
+        if (text == null) {
+            return Component.empty();
+        }
+
         return MiniMessage.miniMessage().deserialize(text)
                 .decoration(TextDecoration.ITALIC, false)
                 .asComponent();
+    }
+
+
+    @Override
+    public Map<String, Object> getDefaultValues() {
+        return new LinkedHashMap<>() {{
+            this.put("#0", "GUI Settings");
+            this.put("gui-settings.title", "Hopper Filters");
+            this.put("gui-settings.rows", 5);
+
+            this.put("#1", "Change Filter");
+            this.put("change-filter.material", "HOPPER");
+            this.put("change-filter.name", "#99FF99&lChange Item Filter Type");
+            this.put("change-filter.slot", 4);
+            this.put("change-filter.lore", List.of(
+                    " &f| &7Click to switch the filter type.",
+                    " &f| &7Current: &f%current%",
+                    " &f| &7Next: &f%next%",
+                    " &f|",
+                    " &f| &7%description%"
+            ));
+
+
+            this.put("#2", "Go Back");
+            this.put("go-back.material", "BARRIER");
+            this.put("go-back.name", "#FF4F58&lGo Back");
+            this.put("go-back.lore", List.of(
+                    " &f| &7Click to go back to the",
+                    " &f| &7hopper menu."
+            ));
+            this.put("go-back.slot", 40);
+
+            this.put("#3", "Next Page");
+            this.put("next-page.material", "PAPER");
+            this.put("next-page.name", "#99FF99&lNext Page");
+            this.put("next-page.lore", List.of(
+                    " &f| &7Click to go to",
+                    " &f| &7the next page."
+            ));
+            this.put("next-page.slot", 5);
+
+            this.put("#4", "Previous Page");
+            this.put("previous-page.material", "PAPER");
+            this.put("previous-page.name", "#99FF99&lPrevious Page");
+            this.put("previous-page.lore", List.of(
+                    " &f| &7Click to go to",
+                    " &f| &7the previous page."
+            ));
+            this.put("previous-page.slot", 3);
+
+            this.put("#5", "Extra Items");
+            this.put("extra-items.0.material", "CYAN_STAINED_GLASS_PANE");
+            this.put("extra-items.0.slots", List.of(0, 8, 36, 44));
+            this.put("extra-items.0.name", " ");
+
+            this.put("extra-items.1.material", "LIGHT_BLUE_STAINED_GLASS_PANE");
+            this.put("extra-items.1.slots", List.of(1, 2, 6, 7, 9, 17, 27, 35, 37, 38, 42, 43));
+            this.put("extra-items.1.name", " ");
+
+            this.put("extra-items.2.material", "BLUE_STAINED_GLASS_PANE");
+            this.put("extra-items.2.slots", List.of(3, 5, 18, 26, 39, 41));
+            this.put("extra-items.2.name", " ");
+
+        }};
+    }
+
+    @Override
+    public String getMenuName() {
+        return "filter-gui";
     }
 
 }

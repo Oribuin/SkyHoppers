@@ -1,6 +1,4 @@
-package xyz.oribuin.skyhoppers.obj;
-
-import org.bukkit.Material;
+package xyz.oribuin.skyhoppers.hopper.filter;
 
 import java.util.List;
 

@@ -104,7 +104,7 @@ public class HopperGUI extends PluginMenu {
                 .player(player)
                 .action(event -> {
                     gui.close(event.getWhoClicked());
-                    this.locale.sendMessage(event.getWhoClicked(), "hopper-linked-success");
+                    this.locale.sendMessage(event.getWhoClicked(), "hopper-link-start");
                     this.plugin.getLinkingPlayers().put(event.getWhoClicked().getUniqueId(), hopper);
                 })
                 .place(gui);

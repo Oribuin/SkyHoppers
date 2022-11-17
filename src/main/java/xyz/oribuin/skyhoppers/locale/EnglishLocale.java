@@ -72,6 +72,7 @@ public class EnglishLocale implements Locale {
             this.put("hopper-removed-success", "You have destroyed a sky hopper.");
             this.put("hopper-linked-success", "You have linked a sky hopper to a container.");
             this.put("hopper-unlinked-success", "You have unlinked a sky hopper from a container.");
+            this.put("hopper-link-start", "Left click a container to link it to this hopper.");
 
             this.put("#10", "Argument Handler Error Messages");
             this.put("argument-handler-integer", "Integer [%input%] must be a whole number between -2^31 and 2^31-1 inclusively");

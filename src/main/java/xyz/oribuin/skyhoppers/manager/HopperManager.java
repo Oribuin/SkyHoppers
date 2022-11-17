@@ -98,7 +98,8 @@ public class HopperManager extends Manager {
             return;
 
         final var hopperBlock = skyHopper.getLocation().getBlock();
-        var hopperState = (org.bukkit.block.Hopper) hopperBlock.getState();
+        if (!(hopperBlock.getState() instanceof Hopper hopperState))
+            return;
 
         // I hate having to update every single time but I can't think of a better way to do this.
         final var container = hopperState.getPersistentDataContainer();

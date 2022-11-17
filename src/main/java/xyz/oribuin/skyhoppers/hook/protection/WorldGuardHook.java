@@ -14,12 +14,29 @@ public class WorldGuardHook implements ProtectionHook {
     @Override
     public boolean canBuild(Player player, Location location) {
         final var query = worldGuard.getPlatform().getRegionContainer().createQuery();
-        return query.testState(BukkitAdapter.adapt(location), WorldGuardPlugin.inst().wrapPlayer(player), Flags.BUILD);
+        final var wgLocation = BukkitAdapter.adapt(location);
+        final var wgPlayer = WorldGuardPlugin.inst().wrapPlayer(player);
+        final var world = BukkitAdapter.adapt(location.getWorld());
+
+        if (WorldGuard.getInstance().getPlatform().getSessionManager().hasBypass(wgPlayer, world)) {
+            return true;
+        }
+
+        return query.testState(wgLocation, wgPlayer, Flags.BLOCK_BREAK) && query.testState(wgLocation, wgPlayer, Flags.BLOCK_PLACE);
     }
 
     @Override
     public boolean canOpen(Player player, Location location) {
         final var query = worldGuard.getPlatform().getRegionContainer().createQuery();
+        final var wgLocation = BukkitAdapter.adapt(location);
+        final var wgPlayer = WorldGuardPlugin.inst().wrapPlayer(player);
+        final var world = BukkitAdapter.adapt(location.getWorld());
+
+        if (WorldGuard.getInstance().getPlatform().getSessionManager().hasBypass(wgPlayer, world)) {
+            return true;
+        }
+
         return query.testState(BukkitAdapter.adapt(location), WorldGuardPlugin.inst().wrapPlayer(player), Flags.CHEST_ACCESS);
     }
+
 }

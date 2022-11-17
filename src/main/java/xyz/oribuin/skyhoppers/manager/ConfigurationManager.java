@@ -16,6 +16,7 @@ public class ConfigurationManager extends AbstractConfigurationManager {
 
     public enum Settings implements RoseSetting {
         INSTANT_PICKUP("instant-pickup", false, "Should broken hoppers be instantly put into the player's inventory?"),
+        DISABLED_HOOKS("disabled-hooks", List.of("NONE"), "A list of plugins to disable hooks for. [BentoBox, IridiumSkyblock, Lands, Towny, WorldGuard]"),
 
         // Task Options
         TASKS_TRANSFER("tasks.transfer", 8, "How often in ticks should hoppers transfer items?"),

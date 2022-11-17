@@ -14,6 +14,7 @@ import xyz.oribuin.skyhoppers.hook.protection.WorldGuardHook;
 import xyz.oribuin.skyhoppers.hook.stacker.RoseStackerHook;
 import xyz.oribuin.skyhoppers.hook.stacker.StackerHook;
 import xyz.oribuin.skyhoppers.hook.stacker.WildStackerHook;
+import xyz.oribuin.skyhoppers.manager.ConfigurationManager.Settings;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,6 +34,7 @@ public class HookManager extends Manager {
     @Override
     public void reload() {
         final PluginManager pluginManager = this.rosePlugin.getServer().getPluginManager();
+        final var disabledHooks = Settings.DISABLED_HOOKS.getStringList();
 
         final Map<String, Class<? extends ProtectionHook>> protectionPlugins = new LinkedHashMap<>() {{
             put("BentoBox", BentoBoxHook.class);
@@ -41,6 +43,9 @@ public class HookManager extends Manager {
             put("Towny", TownyAdvancedHook.class);
             put("WorldGuard", WorldGuardHook.class);
         }};
+
+
+        disabledHooks.forEach(protectionPlugins::remove);
 
         // Load the protection plugins
         for (Map.Entry<String, Class<? extends ProtectionHook>> entry : protectionPlugins.entrySet()) {
@@ -53,10 +58,13 @@ public class HookManager extends Manager {
             }
         }
 
+
         final Map<String, Class<? extends StackerHook>> stackerPlugins = new HashMap<>() {{
             put("RoseStacker", RoseStackerHook.class);
             put("WildStacker", WildStackerHook.class);
         }};
+
+        disabledHooks.forEach(stackerPlugins::remove);
 
         // Load the stacker plugin
         for (Map.Entry<String, Class<? extends StackerHook>> entry : stackerPlugins.entrySet()) {

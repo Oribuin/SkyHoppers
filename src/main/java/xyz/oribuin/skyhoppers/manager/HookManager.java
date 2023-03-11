@@ -44,7 +44,6 @@ public class HookManager extends Manager {
             put("WorldGuard", WorldGuardHook.class);
         }};
 
-
         disabledHooks.forEach(protectionPlugins::remove);
 
         // Load the protection plugins

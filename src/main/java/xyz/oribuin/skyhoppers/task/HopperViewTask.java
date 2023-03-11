@@ -5,6 +5,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
+import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import xyz.oribuin.skyhoppers.manager.ConfigurationManager.Settings;
 import xyz.oribuin.skyhoppers.manager.HopperManager;
@@ -31,14 +32,12 @@ public class HopperViewTask extends BukkitRunnable {
         for (var entry : this.manager.getHopperViewers().entrySet()) {
             // We get this again so the visualizer will update if changed.
             var skyHopper = this.manager.getHopperFromCache(entry.getValue().getLocation());
-
             if (entry.getKey() == null || skyHopper == null)
                 return;
 
-            final var player = Bukkit.getPlayer(entry.getKey());
-            if (player == null) {
+            final var player = this.manager.getCachedPlayer(entry.getKey());
+            if (player == null)
                 return;
-            }
 
             final var hopperLocation = skyHopper.getLocation();
 

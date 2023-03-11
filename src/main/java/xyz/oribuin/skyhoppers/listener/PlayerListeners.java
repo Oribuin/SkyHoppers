@@ -5,6 +5,8 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import xyz.oribuin.skyhoppers.SkyHoppersPlugin;
 import xyz.oribuin.skyhoppers.gui.HopperGUI;
 import xyz.oribuin.skyhoppers.manager.HookManager;
@@ -24,6 +26,16 @@ public class PlayerListeners implements Listener {
         this.manager = this.plugin.getManager(HopperManager.class);
         this.locale = this.plugin.getManager(LocaleManager.class);
         this.hookManager = this.plugin.getManager(HookManager.class);
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
+    public void onJoin(PlayerJoinEvent event) {
+        this.manager.cachePlayer(event.getPlayer());
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
+    public void onQuit(PlayerQuitEvent event) {
+        this.manager.removeCachedPlayer(event.getPlayer());
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)

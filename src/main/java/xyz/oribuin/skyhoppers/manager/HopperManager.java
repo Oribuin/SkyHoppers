@@ -39,6 +39,8 @@ public class HopperManager extends Manager {
 
     private final Map<Location, SkyHopper> hoppers = new HashMap<>();
     private final Map<UUID, SkyHopper> hopperViewers = new HashMap<>();
+    private final Map<UUID, Player> cachedPlayers = new HashMap<>(); // Cache players to prevent constant getPlayer calls
+
     private final Gson gson = new Gson();
 
     private final DataManager dataManager = this.rosePlugin.getManager(DataManager.class);
@@ -411,6 +413,25 @@ public class HopperManager extends Manager {
                 .collect(Collectors.toList());
     }
 
+    public Player getCachedPlayer(UUID uuid) {
+        Player player = this.cachedPlayers.get(uuid);
+        if (player == null) {
+            player = Bukkit.getPlayer(uuid);
+            if (player != null)
+                this.cachedPlayers.put(uuid, player);
+        }
+
+        return player;
+    }
+
+    public void cachePlayer(Player player) {
+        this.cachedPlayers.put(player.getUniqueId(), player);
+    }
+
+    public void removeCachedPlayer(Player player) {
+        this.cachedPlayers.remove(player.getUniqueId());
+    }
+
     /**
      * Get all hoppers that are owned by a player
      *
@@ -496,4 +517,7 @@ public class HopperManager extends Manager {
         return hopperViewers;
     }
 
+    public Map<UUID, Player> getCachedPlayers() {
+        return cachedPlayers;
+    }
 }
